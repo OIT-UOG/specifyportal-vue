@@ -3,6 +3,7 @@
     <Navbar/>
     <SearchDrawer/>
     <v-content>
+      <ViewNav/>
       <router-view></router-view>
     </v-content>
   </v-app>
@@ -12,11 +13,13 @@
 // import ImageGallery from './components/ImageGallery'
 // import ResultTable from './components/ResultTable'
 import Navbar from '@/components/Navbar'
+import ViewNav from '@/components/ViewNav'
 
 export default {
   name: 'App',
   components: {
-    Navbar
+    Navbar,
+    ViewNav
   },
   data () {
     return {
