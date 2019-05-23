@@ -4,4 +4,9 @@ import 'vuetify/src/stylus/app.styl'
 
 Vue.use(Vuetify, {
   iconfont: 'md',
+  theme: {
+    primary: '#619fd1',
+    // secondary
+    // accent
+  },
 })
