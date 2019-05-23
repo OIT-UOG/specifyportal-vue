@@ -22,6 +22,7 @@
 import SearchDrawer from '@/components/SearchDrawer'
 
 export default {
+  name: 'Navbar',
   components: {
     SearchDrawer
   },
