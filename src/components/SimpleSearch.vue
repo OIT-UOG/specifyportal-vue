@@ -77,7 +77,7 @@ export default {
     }, 100),
     ...mapActions(['newSearchTerm', 'runNewQuery'])
   },
-  async created () {
+  async mounted () {
     this.hint_index = this.hints.length - 1
     setInterval(() => {
       if (this.hinting) {
