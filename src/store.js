@@ -324,7 +324,8 @@ export default new Vuex.Store({
     collections: [],
     fields: {},
     entries: {},
-    query: new Query([])
+    query: new Query([]),
+    geoFacetsOn: false,
   },
   mutations: {
     setQueryNextPage(state) {
@@ -359,7 +360,10 @@ export default new Vuex.Store({
     },
     setLoadingState(state, loaded) {
       state.loaded = loaded
-    }
+    },
+    setGeoFacetLoading(state, value) {
+      state.geoFacetsOn = !!value
+    },
   },
   actions: {
     newSearchTerm(context, search) {
@@ -369,6 +373,9 @@ export default new Vuex.Store({
     },
     alterQuery(context, newQuery) {
       context.commit('setQuery', newQuery)
+    },
+    setGeoFacets(context, toggle) {
+      context.commit('setGeoFacetLoading', toggle)
     },
     async runNewQuery(context, query = false) {
       if (!query) {
@@ -393,6 +400,9 @@ export default new Vuex.Store({
     },
     async _doQuery(context) {
       let query = context.state.query.copy()
+      if (context.state.geoFacetsOn) {
+        query = query.geoCounts()
+      }
       let results = await query.quickFetch()
       context.commit('setQuery', query)
       return resultObject(results)
@@ -471,7 +481,34 @@ export default new Vuex.Store({
         return acc
       }, [])
     },
-    getSpecimenById(state, getters, collection, spid) {
+    geoFacets(state) {
+      let entries = state.entries
+      let facets = Object.keys(entries).reduce((acc, coll) => {
+        console.log(coll)
+        console.log(entries)
+        if (entries[coll] != null && entries[coll].facet_counts != null) {
+          let geoc = entries[coll].facet_counts.facet_fields.geoc
+          console.log(geoc)
+          for (let i = 0; i < geoc.length; i += 2) {
+            let [lat, long] = geoc[i].split(' ').map(parseFloat)
+            acc.push(
+              {
+                position: {
+                  lat: lat,
+                  lng: long,
+                },
+                amount: geoc[i + 1],
+                collection: coll,
+              }
+            )
+          }
+        }
+        return acc
+      }, [])
+      console.log('facets', facets)
+      return facets
+    },
+    getSpecimenById: (state, getters) => (collection, spid) => {
       return cache.result_list[collection][spid] || getters.entries.find(e => e.spid === spid)
     },
     moreToQuery(state) {
