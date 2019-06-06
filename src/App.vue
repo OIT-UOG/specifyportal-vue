@@ -1,7 +1,6 @@
 <template>
   <v-app>
     <Navbar/>
-    <SearchDrawer/>
     <v-content>
       <ViewNav/>
       <router-view></router-view>
