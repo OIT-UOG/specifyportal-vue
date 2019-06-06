@@ -3,24 +3,26 @@
 <template>
   <v-layout>
     <v-flex xs12>
-      <v-container grid-list-sm fluid>
+      <v-container fluid pa-1 class="white-bg">
         <v-layout row wrap>
           <v-flex
             v-for="img in images"
             :key="img.filename"
-            xs6 sm3 md2
             d-flex
           >
             <a href="#">
               <ImageItem
                 v-bind:source="imageUrl(img.collection, img.filename)"
-                v-bind:height="200"
+                v-bind:height="180"
+                v-bind:id="img.unique_id"
+                v-bind:title="imgTitle(img)"
               />
             </a>
           </v-flex>
+          <div class="flex-more"></div>
         </v-layout>
       </v-container>
-    </v-flex xs12>
+    </v-flex>
   </v-layout>
 </template>
 
@@ -39,7 +41,23 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['imageUrl', 'images'])
+    ...mapGetters(['imageUrl', 'images', 'getSpecimenById'])
+  },
+  methods: {
+    imgTitle(img) {
+      let spec = this.getSpecimenById(img.collection, img.spid)
+      // console.log(spec)
+      return spec.fn
+    },
   }
 }
 </script>
+
+<style>
+  .flex-more {
+    flex: 100 1 auto
+  }
+  .white-bg {
+    background-color: #fff !important
+  }
+</style>

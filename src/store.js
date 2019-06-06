@@ -19,6 +19,7 @@ class Image {
     this.old_name = title
     this.collection = collection
     this.spid = spid
+    this.unique_id = `${collection}_${id}`
   }
 }
 
@@ -463,7 +464,7 @@ export default new Vuex.Store({
     entries(state) {
       let ret = []
       let entries = state.entries
-      return Object.keys(entries).reduce((acc, coll) => {
+      let ent = Object.keys(entries).reduce((acc, coll) => {
         if (entries[coll] != null) {
           acc.push(...entries[coll].docs.map(entry => {
             entry.coll = coll.replace('vouchers', '')
@@ -472,6 +473,8 @@ export default new Vuex.Store({
         }
         return acc
       }, [])
+      console.log(ent)
+      return ent
     },
     images(state, getters) {
       return getters.entries.reduce((acc, s) => {
@@ -484,11 +487,11 @@ export default new Vuex.Store({
     geoFacets(state) {
       let entries = state.entries
       let facets = Object.keys(entries).reduce((acc, coll) => {
-        console.log(coll)
-        console.log(entries)
+        // console.log(coll)
+        // console.log(entries)
         if (entries[coll] != null && entries[coll].facet_counts != null) {
           let geoc = entries[coll].facet_counts.facet_fields.geoc
-          console.log(geoc)
+          // console.log(geoc)
           for (let i = 0; i < geoc.length; i += 2) {
             let [lat, long] = geoc[i].split(' ').map(parseFloat)
             acc.push(
@@ -505,7 +508,7 @@ export default new Vuex.Store({
         }
         return acc
       }, [])
-      console.log('facets', facets)
+      // console.log('facets', facets)
       return facets
     },
     getSpecimenById: (state, getters) => (collection, spid) => {
