@@ -66,7 +66,7 @@ export default {
     },
     title: {
       type: String,
-      default: "",
+      default: "\xa0",
       required: false
     },
     alt: {
@@ -117,7 +117,7 @@ export default {
       if (gi >= 0) {
         let newdesc = desc.substr(gi);
         newdesc = newdesc.substr(newdesc.search(':')+1).trim();
-        this.title = newdesc || desc.substr(0, gi).trim()
+        this.title = newdesc || desc.substr(0, gi).trim() || this.title
       }
       // self.insertAdjacentHTML('afterend', "<div class=\"tv-thumb-summary\">" + desc + "</div>");
   },
