@@ -32,6 +32,8 @@
 </template>
 
 <script>
+import { mapActions, mapGetters } from 'vuex';
+
 export default {
   name: "ImageItem",
   data () {
@@ -81,6 +83,8 @@ export default {
     width () {
       return this.pxSize(this.size)
     },
+    ...mapGetters(['getImageSize'])
+  },
   methods: {
     pxSize(size) {
       return this.sizeChart[size]
@@ -113,13 +117,26 @@ export default {
         this.title = newdesc || desc.substr(0, gi).trim()
       }
       // self.insertAdjacentHTML('afterend', "<div class=\"tv-thumb-summary\">" + desc + "</div>");
-    }
+  },
+    ...mapActions(['setImageSize'])
   },
   mounted() {
+    let size = this.getImageSize(this.id)
+    // console.log()
+    this.size = size || this.size
+
     let img = new Image()
     img.onload = () => {
-      // console.log('img', this)
       this.setDataWidthAndSummary(img)
+      if (!size) {
+        // console.log('caching')
+        // console.log(this.size, this.width)
+        this.setImageSize({
+          unique_id: this.id,
+          size: this.size,
+          width: this.width
+        })
+      }
       this.loaded = true
     }
     img.src = this.source
