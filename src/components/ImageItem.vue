@@ -39,6 +39,14 @@ export default {
       loaded: false,
       summary: "",
       size: "regular",
+      sizeChart: {
+        'thinner': 108,
+        'thin': 135,
+        'regular': 180,
+        'wide': 270,
+        'wider': 324,
+        'widest': 360,
+      },
     }
   },
   props: {
@@ -66,10 +74,17 @@ export default {
   },
   computed: {
     style () {
-      return `background-image: url(${this.source});`
-    }
+      let style = `background-image: url(${this.source}); `
+      style += `width: ${this.sizeChart[this.size]}px;`
+      return style
   },
+    width () {
+      return this.pxSize(this.size)
+    },
   methods: {
+    pxSize(size) {
+      return this.sizeChart[size]
+    },
     setDataWidthAndSummary(self){
       // console.log('self', self)
       // console.log('this', this)
@@ -136,28 +151,5 @@ export default {
 
 .tv-thumb-wrap:hover {
   box-shadow: 0 0 1px 1px rgb(192, 192, 192);
-}
-
-.tv-thumb-wrap[data-width=thinner] {
-  width: 108px;
-}
-
-.tv-thumb-wrap[data-width=thin] {
-  width: 135px
-}
-
-.tv-thumb-wrap[data-width=wide] {
-  width: 270px;
-}
-
-.tv-thumb-wrap[data-width=wider] {
-  width: 324px
-}
-
-.tv-thumb-wrap[data-width=widest] {
-  width: 360px
-}
-.tv-thumb-wrap[data-width=regular] {
-  width: 180px;
 }
 </style>
