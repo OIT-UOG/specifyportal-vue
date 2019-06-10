@@ -29,8 +29,9 @@ const ROWS_PER_QUERY = 100
 
 class Query {
   constructor(collections, queryTerms = ['*'], params = {}) {
-    this.collections = collections
-    this.qs = (queryTerms.constructor === Array) ? queryTerms : [queryTerms]
+    this.collections = [...collections]
+    const qs = (queryTerms.constructor === Array) ? queryTerms : [queryTerms]
+    this.qs = [...qs]
     this.params = {
       wt: 'json',
       rows: ROWS_PER_QUERY,
@@ -224,8 +225,10 @@ class Query {
       page: page,
       start: this.params.rows * page
     })
-    if (this.numFound) {
-      nextQuery.numFound = this.numFound
+    if (!(Object.keys(this.numFound).length === 0 && this.numFound.constructor === Object)) {
+      nextQuery.numFound = {...this.numFound}
+      // I don't remember if I wanted them to share this object
+      // or have a deep clone
     }
     return nextQuery
   }
@@ -260,7 +263,7 @@ class Query {
       ...params
     })
   }
-  copy() {
+  _copy() {
     return new Query(this.collections, this.qs, this.params)
   }
   sort(solrField, asc = true) { // what happens when one collection doesn't have the field?
@@ -400,7 +403,7 @@ export default new Vuex.Store({
       return true
     },
     async _doQuery(context) {
-      let query = context.state.query.copy()
+      let query = context.state.query._copy()
       if (context.state.geoFacetsOn) {
         query = query.geoCounts()
       }
