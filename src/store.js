@@ -20,6 +20,8 @@ class Image {
     this.collection = collection
     this.spid = spid
     this.unique_id = `${collection}_${id}`
+    this.sizeRatio = null
+    this.width = null
   }
 }
 
@@ -368,6 +370,11 @@ export default new Vuex.Store({
     setGeoFacetLoading(state, value) {
       state.geoFacetsOn = !!value
     },
+    _setImgSize(state, payload) {
+      let img = payload.getters.getImage(payload.unique_id)
+      img.sizeRatio = payload.size
+      img.width = payload.px
+    },
   },
   actions: {
     newSearchTerm(context, search) {
@@ -410,6 +417,14 @@ export default new Vuex.Store({
       let results = await query.quickFetch()
       context.commit('setQuery', query)
       return resultObject(results)
+    },
+    setImageSize(context, payload) {
+      context.commit('_setImgSize', {
+        unique_id: payload.unique_id,
+        getters: context.getters,
+        size: payload.size,
+        width: payload.width
+      })
     },
     async loadSettings(context) {
       context.commit('setCollections', await scrapeCollections())
@@ -478,6 +493,18 @@ export default new Vuex.Store({
       }, [])
       console.log(ent)
       return ent
+    },
+    getImage: (state, getters) => (unique_id) => {
+      return getters.images.find((img)=>{
+        return img.unique_id === unique_id
+      })
+    },
+    getImageSize: (state, getters) => (unique_id) => {
+
+      return getters.getImage(unique_id).sizeRatio
+    },
+    getImageWidth: (state, getters) => (unique_id) => {
+      return getters.getImage(unique_id).width
     },
     images(state, getters) {
       return getters.entries.reduce((acc, s) => {
