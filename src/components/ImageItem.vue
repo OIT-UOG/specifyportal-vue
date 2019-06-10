@@ -76,12 +76,15 @@ export default {
   },
   computed: {
     style () {
-      let style = `background-image: url(${this.source}); `
+      let style = `background-image: url(${this.loadedSource}); `
       style += `width: ${this.sizeChart[this.size]}px;`
       return style
-  },
+    },
     width () {
       return this.pxSize(this.size)
+    },
+    loadedSource () {
+      return this.loaded? this.source : ""
     },
     ...mapGetters(['getImageSize'])
   },
