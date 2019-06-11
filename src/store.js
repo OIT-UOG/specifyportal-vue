@@ -72,8 +72,7 @@ class Query {
     let responses = await Promise.all(Object.keys(urls).map(async (coll) => {
       let lastPage = this.lastPageNumber(coll)
 
-
-      if (this.params.page > lastPage) {
+      if (lastPage && this.params.page > lastPage) {
         return null
       }
 
@@ -219,6 +218,12 @@ class Query {
     }
     return false
   }
+  cloneNumFound(other) {
+    other = other || this
+    let copy = this._copy()
+    copy.numFound = {...other.numFound}
+    return copy
+  }
   setPage(page) {
     // check cache here. { run: () => null } ?
     // return null if no more pages
@@ -226,12 +231,9 @@ class Query {
       rows: this.params.rows,
       page: page,
       start: this.params.rows * page
-    })
-    if (!(Object.keys(this.numFound).length === 0 && this.numFound.constructor === Object)) {
-      nextQuery.numFound = {...this.numFound}
+    }).cloneNumFound(this)
       // I don't remember if I wanted them to share this object
       // or have a deep clone
-    }
     return nextQuery
   }
   nextPage() {
@@ -404,13 +406,12 @@ export default new Vuex.Store({
         return false
       }
       context.commit('setQueryNextPage')
-
       let results = await context.dispatch('_doQuery')
       context.commit('addEntries', results)
       return true
     },
     async _doQuery(context) {
-      let query = context.state.query._copy()
+      let query = context.state.query.cloneNumFound()
       if (context.state.geoFacetsOn) {
         query = query.geoCounts()
       }
