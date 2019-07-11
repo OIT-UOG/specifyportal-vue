@@ -52,7 +52,7 @@ export default {
       }
       return 'search'
     },
-    ...mapGetters(['moreToQuery'])
+    // ...mapGetters(['moreToQuery'])
   },
   watch: {
     searchQuery () {

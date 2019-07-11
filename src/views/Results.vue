@@ -16,7 +16,7 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState, mapGetters } from 'vuex'
 
 export default {
   name: 'Results',
@@ -34,7 +34,10 @@ export default {
         }
       })
     },
-    ...mapGetters(['moreToQuery', 'entries', 'numFound', 'colAttrs', 'visibleCols'])
+    ...mapGetters(['numFound', 'colAttrs', 'visibleCols',
+    // 'moreToQuery'
+    ]),
+    ...mapState({entries: 'viewEntries'})
   }
 }
 </script>

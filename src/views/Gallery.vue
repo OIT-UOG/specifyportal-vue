@@ -88,7 +88,8 @@ export default {
     loadedImages () {
       return this.images.slice(0, this.index + 1)
     },
-    ...mapGetters(['imageUrl', 'images', 'getSpecimenById'])
+    ...mapGetters(['imageUrl', 'getSpecimenById']),
+    ...mapGetters({images: 'viewImages'})
   },
   methods: {
     onResize () {
@@ -113,6 +114,7 @@ export default {
       if (newIndex > this.images.length && !this.querying) {
         this.loading = true
         this.querying = true
+        console.log('more more')
         moreToQuery = await this.more()
         this.querying = false
         this.loading = false

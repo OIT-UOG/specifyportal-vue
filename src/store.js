@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
+import { normalize } from 'path';
 
 Vue.use(Vuex)
 
@@ -25,7 +26,7 @@ class Image {
   }
 }
 
-const ROWS_PER_QUERY = 100
+const ROWS_PER_QUERY = 50
 // what should the default rows be?
 // could make it high and lazy-load the images.
 
@@ -120,6 +121,7 @@ class Query {
     }
     r = r.response
     r.docs = r.docs.map(doc => {
+      doc.coll = collection.replace('vouchers', '')
       if ('img' in doc) {
         doc.img = this._parseImages(collection, doc)
       }
@@ -334,6 +336,8 @@ export default new Vuex.Store({
     entries: {},
     query: new Query([]),
     geoFacetsOn: false,
+    viewEntries: [],
+    viewIndexes: {},
   },
   mutations: {
     setQueryNextPage(state) {
@@ -345,6 +349,7 @@ export default new Vuex.Store({
       state.query = newQuery
     },
     setEntries(state, newEntries) {
+      console.log(newEntries)
       state.entries = newEntries // do I need to do these individually?
     },
     addEntries(state, additionalEntries) {
@@ -356,6 +361,18 @@ export default new Vuex.Store({
         }
       })
       // do I need to use the same array?
+    },
+    setViewEntries(state, entries) {
+      state.viewEntries = entries
+    },
+    setViewIndexes(state, indexes) {
+      state.viewIndexes = indexes
+    },
+    resetViewIndexes(state) {
+      state.viewIndexes = state.collections.reduce((acc, coll) => {
+        acc[coll] = 0
+        return acc
+      },{})
     },
     setFields(state, fields) {
       state.fields = fields
@@ -390,6 +407,66 @@ export default new Vuex.Store({
     setGeoFacets(context, toggle) {
       context.commit('setGeoFacetLoading', toggle)
     },
+    updateViewEntries(context) {
+      let state = context.state
+
+      let indexes = { ...state.viewIndexes }
+      let entries = state.entries
+
+      let yetToView = Object.entries(state.query.numFound).reduce((acc, [coll, val]) => {
+        let nval = val - indexes[coll]
+        if (nval > 0) {
+          acc[coll] = nval
+        }
+        return acc
+      }, {})
+
+      const normalizeDistribution = (dist) => {
+        let sum = Object.values(dist).reduce((a, b) => a + b, 0)
+        return Object.entries(dist).reduce((acc, [k, v]) => {
+          acc[k] = v / sum
+          return acc
+        }, {})
+      }
+      const randOnDistribution = (normDist) => {
+        let r = Math.random()
+        let isum = 0
+        let [res, vi] = Object.entries(normDist).find(([k, v]) => {
+          isum += v
+          return r <= isum
+        })
+        return res
+      }
+      const decrView = (ytv, col) => {
+        ytv[col] -= 1
+        if (ytv[col] <= 0) {
+          delete ytv[col]
+        }
+      }
+
+      let nextEntries = []
+
+      while (true) {
+        if (Object.keys(yetToView).length === 0) {
+          break
+        }
+        let coll = randOnDistribution(normalizeDistribution(yetToView))
+        decrView(yetToView, coll)
+        let thisIndex = indexes[coll]
+        let item = entries[coll].docs[thisIndex]
+        if (item === undefined) {
+          break
+        }
+        nextEntries.push(item)
+        indexes[coll] += 1
+      }
+
+      context.commit('setViewIndexes', indexes)
+      context.commit('setViewEntries', [...state.viewEntries, ...nextEntries])
+
+      console.log(indexes)
+      console.log(nextEntries)
+    },
     async runNewQuery(context, query = false) {
       if (!query) {
         query = context.state.query
@@ -398,7 +475,10 @@ export default new Vuex.Store({
       }
 
       let results = await context.dispatch('_doQuery')
+      context.commit('resetViewIndexes')
+      context.commit('setViewEntries', [])
       context.commit('setEntries', results)
+      context.dispatch('updateViewEntries')
     },
     async more(context) {
       let query = context.state.query
@@ -408,6 +488,7 @@ export default new Vuex.Store({
       context.commit('setQueryNextPage')
       let results = await context.dispatch('_doQuery')
       context.commit('addEntries', results)
+      context.dispatch('updateViewEntries')
       return true
     },
     async _doQuery(context) {
@@ -481,12 +562,11 @@ export default new Vuex.Store({
       }, 0)
     },
     entries(state) {
-      let ret = []
       let entries = state.entries
       let ent = Object.keys(entries).reduce((acc, coll) => {
         if (entries[coll] != null) {
           acc.push(...entries[coll].docs.map(entry => {
-            entry.coll = coll.replace('vouchers', '')
+            // entry.coll = coll.replace('vouchers', '')
             return entry
           }))
         }
@@ -509,6 +589,14 @@ export default new Vuex.Store({
     },
     images(state, getters) {
       return getters.entries.reduce((acc, s) => {
+        if ('img' in s) {
+          acc.push(...s.img)
+        }
+        return acc
+      }, [])
+    },
+    viewImages(state) {
+      return state.viewEntries.reduce((acc, s) => {
         if ('img' in s) {
           acc.push(...s.img)
         }
@@ -546,6 +634,8 @@ export default new Vuex.Store({
       return cache.result_list[collection][spid] || getters.entries.find(e => e.spid === spid)
     },
     moreToQuery(state) {
+      console.log(state.query)
+      console.log(state.query.hasMorePages)
       return state.query.hasMorePages()
     },
     collectionSettings: (state) => (coll) => {

@@ -2,7 +2,7 @@ const Dotenv = require('dotenv-webpack')
 
 module.exports = {
   publicPath: '',
-  outputDir: '../apps/viewer',
+  outputDir: 'dist',
   configureWebpack: {
     plugins: [
       new Dotenv()
