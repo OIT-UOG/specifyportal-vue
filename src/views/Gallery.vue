@@ -130,7 +130,7 @@ export default {
     imgTitle(img) {
       let spec = this.getSpecimenById(img.collection, img.spid)
       // console.log(spec)
-      return spec.fn
+      return [spec.ge, spec.sp].map(a => a && a.trim()).filter(Boolean).join(' ')
     },
     ...mapActions(['more'])
   },
