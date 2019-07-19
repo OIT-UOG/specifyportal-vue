@@ -536,6 +536,9 @@ export default new Vuex.Store({
       let fields = [collectionField, ...fieldData.flat()].reduce((acc, field) => {
         acc[field.solrname] = field
         field.advancedsearch = field.advancedsearch ? true : false
+        if (field.title === 'determinations') {
+          field.advancedsearch = false
+        }
         return acc
       }, {})
       context.commit('setFields', fields)
