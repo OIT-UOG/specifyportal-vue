@@ -29,7 +29,7 @@ export default {
     headers () {
       return this.visibleCols.map((h) => {
         return {
-          text: h.colname,
+          text: h.title,
           value: h.solrname
         }
       })
