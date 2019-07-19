@@ -3,6 +3,6 @@ services:
   web:
     build: "https://github.com/OIT-UOG/specify-webportal-installer.git#vue-rewrite"
     volumes:
-      - ./dist/:/usr/local/tomcat/webapps/apps/viewer/:ro
+      - ./build/:/usr/local/tomcat/webapps/apps/:ro
     ports:
       - "80:8080"
