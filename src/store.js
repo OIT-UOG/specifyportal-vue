@@ -535,6 +535,7 @@ export default new Vuex.Store({
       }
       let fields = [collectionField, ...fieldData.flat()].reduce((acc, field) => {
         acc[field.solrname] = field
+        field.advancedsearch = field.advancedsearch ? true : false
         return acc
       }, {})
       context.commit('setFields', fields)
@@ -651,15 +652,14 @@ export default new Vuex.Store({
       return Object.keys(state.fields).map(key => state.fields[key])
     },
     advancedSearchColumns(state, getters) {
-      return getters.fieldList.filter(col => 'advancedsearch' in col && col.advancedsearch ===
-        'true')
+      return getters.fieldList.filter(col => col.advancedsearch)
     },
     colAttrs(state, getters, solrName) {
       return getters.fieldList.find(col => col.solrname === solrName)
     },
     visibleCols(state, getters) {
       return getters.fieldList.filter(field => {
-        return 'displaycolidx' in field
+        return ('displaycolidx' in field) && field.advancedsearch
       }).sort((a, b) => {
         return a['displaycolidx'] - b['displaycolidx']
       })
