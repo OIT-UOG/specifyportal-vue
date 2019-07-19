@@ -660,6 +660,19 @@ export default new Vuex.Store({
     colAttrs(state, getters, solrName) {
       return getters.fieldList.find(col => col.solrname === solrName)
     },
+    allCols(state, getters) {
+      return getters.fieldList.filter(field => {
+        return 'displaycolidx' in field
+      }).sort((a, b) => {
+        return a['displaycolidx'] - b['displaycolidx']
+      }).concat(
+        getters.fieldList.filter(field => {
+          return !('displaycolidx' in field)
+        }).sort((a, b) => {
+          return a.title > b.title? 1 : -1
+        })
+      )
+    },
     visibleCols(state, getters) {
       return getters.fieldList.filter(field => {
         return ('displaycolidx' in field) && field.advancedsearch
