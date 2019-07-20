@@ -335,6 +335,7 @@ export default new Vuex.Store({
     fields: {},
     entries: {},
     query: new Query([]),
+    queryLoading: false,
     geoFacetsOn: false,
     viewEntries: [],
     viewIndexes: {},
@@ -347,6 +348,9 @@ export default new Vuex.Store({
     },
     setQuery(state, newQuery) {
       state.query = newQuery
+    },
+    setQueryLoading(state, loading) {
+      state.queryLoading = loading
     },
     setEntries(state, newEntries) {
       console.log(newEntries)
@@ -492,12 +496,14 @@ export default new Vuex.Store({
       return true
     },
     async _doQuery(context) {
+      context.commit('setQueryLoading', true)
       let query = context.state.query.cloneNumFound()
       if (context.state.geoFacetsOn) {
         query = query.geoCounts()
       }
       let results = await query.quickFetch()
       context.commit('setQuery', query)
+      context.commit('setQueryLoading', false)
       return resultObject(results)
     },
     setImageSize(context, payload) {

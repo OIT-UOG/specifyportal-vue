@@ -1,8 +1,10 @@
 <template>
   <v-data-table
-    :headers="headers"
-    :items="entries"
+    :items="pageEntries"
     :rows-per-page-items="rowsPerPage"
+    :total-items="numFound"
+    :loading="loading"
+    :pagination.sync="pagination"
   >
     <!-- hide-actions -->
     <template v-slot:items="props">
@@ -16,13 +18,31 @@
 </template>
 
 <script>
-import { mapState, mapGetters } from 'vuex'
+import { mapState, mapGetters, mapActions } from 'vuex'
 
 export default {
   name: 'Results',
   data () {
     return {
-      rowsPerPage: [20,50,100]
+      rowsPerPage: [20,50,100],
+      pagination: {}
+    }
+  },
+  asyncComputed: {
+    pageEntries: {
+      async get() {
+        const { sortBy, descending, page, rowsPerPage } = this.pagination
+
+        const cutIndex = page * rowsPerPage
+
+        if (cutIndex > this.entries.length) {
+          // only need to do this once since values bubble in each get() of this value
+          await this.more()
+        }
+
+        return this.entries.slice((page - 1) * rowsPerPage, cutIndex)
+      },
+      default: []
     }
   },
   computed: {
@@ -37,8 +57,11 @@ export default {
     ...mapGetters(['numFound', 'colAttrs', 'visibleCols',
     // 'moreToQuery'
     ]),
-    ...mapState({entries: 'viewEntries'})
-  }
+    ...mapState({entries: 'viewEntries', loading: 'queryLoading'})
+  },
+  methods: {
+    ...mapActions(['more'])
+  },
 }
 </script>
 

@@ -3,6 +3,7 @@ import './plugins/vuetify';
 import * as VueGoogleMaps from 'vue2-google-maps';
 import InfiniteScroll from 'v-infinite-scroll';
 import 'v-infinite-scroll/dist/v-infinite-scroll.css';
+import AsyncComputed from 'vue-async-computed'
 import App from './App.vue';
 import router from './router';
 import store from './store';
@@ -14,6 +15,8 @@ Vue.config.productionTip = false;
 Vue.directive('lazyload', LazyLoadDirective);
 
 Vue.use(InfiniteScroll);
+
+Vue.use(AsyncComputed);
 
 Vue.use(VueGoogleMaps, {
   load: {
