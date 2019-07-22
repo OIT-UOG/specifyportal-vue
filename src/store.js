@@ -381,6 +381,9 @@ export default new Vuex.Store({
     setFields(state, fields) {
       state.fields = fields
     },
+    setFieldResultVisibility(state, {solrname, visibleInResults}) {
+      state.fields[solrname].visibleInResults = visibleInResults
+    },
     setCustomSettings(state, settings) {
       state.customSettings = settings
     },
@@ -548,6 +551,7 @@ export default new Vuex.Store({
         if (!('title' in field)) {
           field.title =  field.colname
         }
+        field.visibleInResults = field.advancedsearch
         return acc
       }, {})
       context.commit('setFields', fields)
@@ -683,10 +687,8 @@ export default new Vuex.Store({
       )
     },
     visibleCols(state, getters) {
-      return getters.fieldList.filter(field => {
-        return ('displaycolidx' in field) && field.advancedsearch
-      }).sort((a, b) => {
-        return a['displaycolidx'] - b['displaycolidx']
+      return getters.allCols.filter(field => {
+        return field.visibleInResults
       })
     }
   }
