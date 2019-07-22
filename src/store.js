@@ -59,7 +59,7 @@ class Query {
       ...this.params
     }
     return [
-      `q=${this.qUrlParam}`,
+      `q=${this.qUrlParam}`.toLowerCase(),
       ...Object.keys(params).sort().map(
         key => `${key}=${encodeURIComponent(params[key])}`
       )
