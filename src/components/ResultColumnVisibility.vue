@@ -1,19 +1,22 @@
 <template>
-  <v-card>
+  <v-card dense>
     <v-toolbar
       flat
       dark
       color="primary"
 
-
     >
     <!-- class="headline text-uppercase" -->
-      <v-toolbar-title>
+      <v-toolbar-title
+        class="subheading text-uppercase"
+      >
         Select Table Columns
       </v-toolbar-title>
     </v-toolbar>
     <v-card-text>
-      <v-list>
+      <v-list
+        dense
+      >
         <v-list-tile
           v-for="header in headers"
           :key="header.value"

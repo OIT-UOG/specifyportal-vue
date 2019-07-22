@@ -12,7 +12,7 @@
         <th class="tiny-column">
           <v-dialog
             scrollable
-            width="375px"
+            width="350px"
           >
             <template v-slot:activator="{ on }">
               <!-- <v-btn
