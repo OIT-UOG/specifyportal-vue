@@ -545,6 +545,9 @@ export default new Vuex.Store({
         if (field.title === 'determinations') {
           field.advancedsearch = false
         }
+        if (!('title' in field)) {
+          field.title =  field.colname
+        }
         return acc
       }, {})
       context.commit('setFields', fields)
