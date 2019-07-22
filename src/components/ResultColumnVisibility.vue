@@ -1,0 +1,67 @@
+<template>
+  <v-card>
+    <v-toolbar
+      flat
+      dark
+      color="primary"
+
+
+    >
+    <!-- class="headline text-uppercase" -->
+      <v-toolbar-title>
+        Select Table Columns
+      </v-toolbar-title>
+    </v-toolbar>
+    <v-card-text>
+      <v-list>
+        <v-list-tile
+          v-for="header in headers"
+          :key="header.value"
+        >
+          <v-checkbox
+            :input-value="header.visible"
+            :label="header.text"
+            @change="toggleColumnVisibility(header)"
+          >
+
+          </v-checkbox>
+        </v-list-tile>
+      </v-list>
+    </v-card-text>
+  </v-card>
+</template>
+
+<script>
+import { mapMutations, mapGetters } from 'vuex'
+
+export default {
+  name: 'Results',
+  data () {
+    return {
+
+    }
+  },
+  computed: {
+    headers () {
+      console.log(this.allCols)
+      return this.allCols.map((h) => {
+        return {
+          text: h.title,
+          value: h.solrname,
+          visible: h.visibleInResults
+        }
+      })
+    },
+    ...mapGetters(['allCols'])
+  },
+  methods: {
+    toggleColumnVisibility(header) {
+      this.setVisible({
+        solrname: header.value,
+        visibleInResults: !header.visible
+      })
+    },
+    ...mapMutations({setVisible: 'setFieldResultVisibility'})
+  }
+}
+</script>

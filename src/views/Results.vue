@@ -1,13 +1,47 @@
 <template>
   <v-data-table
+    :headers="visHeaders"
     :items="pageEntries"
     :rows-per-page-items="rowsPerPage"
     :total-items="numFound"
     :loading="loading"
     :pagination.sync="pagination"
   >
-    <!-- hide-actions -->
+    <template v-slot:headers="props">
+      <tr>
+        <th class="tiny-column">
+          <v-dialog
+            scrollable
+            width="375px"
+          >
+            <template v-slot:activator="{ on }">
+              <!-- <v-btn
+                icon
+                v-on="on"
+              > -->
+                <v-icon
+                  size="1.8em"
+                  v-on="on"
+                >more_vert</v-icon>
+              <!-- </v-btn> -->
+            </template>
+
+            <ResultColumnVisibility/>
+          </v-dialog>
+        </th>
+        <th
+          v-for="header in props.headers"
+          :key="header.text"
+          :class="['column sortable', pagination.descending ? 'desc' : 'asc', header.value === pagination.sortBy ? 'active' : '']"
+          @click="changeSort(header.value)"
+        >
+          <v-icon small>arrow_upward</v-icon>
+          {{ header.text }}
+        </th>
+      </tr>
+    </template>
     <template v-slot:items="props">
+      <td class="tiny-column"></td>
       <td
         v-for="f of visibleCols"
         :key=f.solrname
@@ -19,9 +53,13 @@
 
 <script>
 import { mapState, mapGetters, mapActions } from 'vuex'
+import ResultColumnVisibility from '@/components/ResultColumnVisibility'
 
 export default {
   name: 'Results',
+  components: {
+    ResultColumnVisibility
+  },
   data () {
     return {
       rowsPerPage: [20,50,100],
@@ -46,7 +84,7 @@ export default {
     }
   },
   computed: {
-    headers () {
+    visHeaders () {
       return this.visibleCols.map((h) => {
         return {
           text: h.title,
@@ -60,14 +98,27 @@ export default {
     ...mapState({entries: 'viewEntries', loading: 'queryLoading'})
   },
   methods: {
+    changeSort (column) {
+      if (this.pagination.sortBy === column) {
+        this.pagination.descending = !this.pagination.descending
+      } else {
+        this.pagination.sortBy = column
+        this.pagination.descending = false
+      }
+    },
     ...mapActions(['more'])
-  },
+  }
 }
 </script>
 
 <style>
   tr:nth-of-type(even) {
     background-color: #e8edf1;
+  }
+  .tiny-column {
+    max-width: 1em;
+    padding-left: 10px !important;
+    padding-right: 0px !important;
   }
 </style>
 
