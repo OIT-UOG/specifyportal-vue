@@ -35,7 +35,7 @@ export default {
       hinting: false,
       hints: [
         'try using wildcards *',
-        'specify fields with field:search',
+        // 'specify fields with field:search', // need to translate field from title to solrname first
       ],
 
       searchQuery: '',
