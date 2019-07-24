@@ -264,13 +264,19 @@ class Query {
     return this._addQueryTerms(this._qTerm(name, search, endSearch))
   }
   addParams(params) {
-    return new Query(this.collections, this.qs, {
-      ...this.params,
-      ...params
-    })
+  removeParam(key) {
+    let q = this.cloneFreshQuery()
+    delete q.params[key]
+    return q
   }
   _copy() {
     return new Query(this.collections, this.qs, this.params)
+  }
+  cloneFreshQuery() {
+    let q = this._copy()
+    q.params.page = 0
+    q.params.start = 0
+    return q
   }
   sort(solrField, asc = true) { // what happens when one collection doesn't have the field?
     let ascDesc = asc ? 'asc' : 'desc'
@@ -278,6 +284,19 @@ class Query {
       sort: `${solrField} ${ascDesc}`
     }
     return this.addParams(param)
+  }
+  unsort() {
+    return this.removeParam('sort')
+  }
+  getSort() {
+    let [field, asc] = ('sort' in this.params)? this.params.sort.split(' ') : [false, false]
+    if (field) {
+      asc = asc === 'asc'
+    }
+    return {
+      field,
+      asc
+    }
   }
   setCollections(collections) {
     return new Query(collections, this.qs, this.params)
@@ -339,6 +358,7 @@ export default new Vuex.Store({
     geoFacetsOn: false,
     viewEntries: [],
     viewIndexes: {},
+    collectionSort: false,
   },
   mutations: {
     setQueryNextPage(state) {
@@ -390,6 +410,12 @@ export default new Vuex.Store({
     setCollections(state, collections) {
       state.collections = collections
     },
+    setCollectionSort(state, asc) {
+      state.collectionSort = { asc }
+    },
+    setCollectionUnsort(state) {
+      state.collectionSort = false
+    },
     setLoadingState(state, loaded) {
       state.loaded = loaded
     },
@@ -414,11 +440,26 @@ export default new Vuex.Store({
     setGeoFacets(context, toggle) {
       context.commit('setGeoFacetLoading', toggle)
     },
-    updateViewEntries(context) {
-      let state = context.state
+    sort(context, { field, asc = true }) {
+      if (field === 'coll') {
+        context.commit('setCollectionSort', asc)
+        context.dispatch('runNewQuery', context.state.query.unsort())
+      } else {
+        context.dispatch('runNewQuery', context.state.query.sort(field, asc))
+      }
+    },
+    unsort(context) {
+      if (context.state.collectionSort) {
+        context.commit('setCollectionUnsort')
+      }
+      context.dispatch('runNewQuery', context.state.query.unsort())
+    },
+    updateViewEntries({ state, getters, commit }) {
 
       let indexes = { ...state.viewIndexes }
       let entries = state.entries
+
+      let {field: sortField, asc: sortAsc} = getters.getSort
 
       let yetToView = Object.entries(state.query.numFound).reduce((acc, [coll, val]) => {
         let nval = val - indexes[coll]
@@ -450,6 +491,28 @@ export default new Vuex.Store({
           delete ytv[col]
         }
       }
+      const inOrder = (a, b) => {
+        if (!a) { return true }
+        if (!b) { return false }
+        [a, b] = [a, b].map(c => c[sortField])
+        // if one is a string
+        if ([a, b].map(a => typeof a).includes('string')) {
+          // check if it's just a number
+          if ([a, b].some(a => String(Number(a)) === a)) {
+            [a, b] = [a, b].map(Number)
+          } else {
+            [a, b] = [a, b].map(String)
+          }
+        }
+        return sortAsc ? a < b : b < a
+      }
+      const nextSortedCollection = (indexes, collections) => {
+        return collections.map((coll) => {
+          return [coll, entries[coll].docs[indexes[coll]]]
+        }).reduce((prev, curr) => {
+          return inOrder(prev[1], curr[1]) ? prev : curr
+        })[0]
+      }
 
       let nextEntries = []
 
@@ -457,19 +520,20 @@ export default new Vuex.Store({
         if (Object.keys(yetToView).length === 0) {
           break
         }
-        let coll = randOnDistribution(normalizeDistribution(yetToView))
-        decrView(yetToView, coll)
+        let coll = sortField ? nextSortedCollection(indexes, Object.keys(yetToView)) : randOnDistribution(normalizeDistribution(
+          yetToView))
         let thisIndex = indexes[coll]
         let item = entries[coll].docs[thisIndex]
         if (item === undefined) {
           break
         }
+        decrView(yetToView, coll)
         nextEntries.push(item)
         indexes[coll] += 1
       }
 
-      context.commit('setViewIndexes', indexes)
-      context.commit('setViewEntries', [...state.viewEntries, ...nextEntries])
+      commit('setViewIndexes', indexes)
+      commit('setViewEntries', [...state.viewEntries, ...nextEntries])
 
       console.log(indexes)
       console.log(nextEntries)
@@ -649,6 +713,15 @@ export default new Vuex.Store({
     },
     getSpecimenById: (state, getters) => (collection, spid) => {
       return cache.result_list[collection][spid] || getters.entries.find(e => e.spid === spid)
+    },
+    getSort(state) {
+      if (state.collectionSort) {
+        return {
+          field: 'coll',
+          ...state.collectionSort
+        }
+      }
+      return state.query.getSort()
     },
     moreToQuery(state) {
       console.log(state.query)

@@ -98,15 +98,25 @@ export default {
     ...mapState({entries: 'viewEntries', loading: 'queryLoading'})
   },
   methods: {
-    changeSort (column) {
+    async changeSort (column) {
       if (this.pagination.sortBy === column) {
-        this.pagination.descending = !this.pagination.descending
+        if (this.pagination.descending) {
+          this.pagination = {}
+          return this.unsort()
+        }
+        else {
+          this.pagination.descending = true
+        }
       } else {
         this.pagination.sortBy = column
         this.pagination.descending = false
       }
+      this.sort({
+        field: this.pagination.sortBy,
+        asc: this.pagination.descending
+      })
     },
-    ...mapActions(['more'])
+    ...mapActions(['more', 'sort', 'unsort', 'runNewQuery'])
   }
 }
 </script>
