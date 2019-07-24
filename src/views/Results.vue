@@ -101,7 +101,7 @@ export default {
     async changeSort (column) {
       if (this.pagination.sortBy === column) {
         if (this.pagination.descending) {
-          this.pagination = {}
+          this.pagination.sortBy = null
           return this.unsort()
         }
         else {
