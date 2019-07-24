@@ -56,19 +56,22 @@ export default {
     // ...mapGetters(['moreToQuery'])
   },
   watch: {
-    searchQuery () {
+    async searchQuery () {
       this.isTyping = true
-      let query = this.searchQuery || '*'
-      this.doSearch(query)
+      await this.search()
     },
     async loaded () {
-      await this.doSearch(this.searchQuery || '*')
+      await this.doSearch(this.searchQuery + '*')
     }
   },
   methods: {
     async search () {
       this.searching = true
-      await this.doSearch()
+      let query = this.searchQuery
+      if (!query.endsWith('*')) {
+        query += '*'
+      }
+      await this.doSearch(query)
       this.searching = false
     },
     doSearch: _.debounce(async function(search) {
