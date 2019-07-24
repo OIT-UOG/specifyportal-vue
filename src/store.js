@@ -255,15 +255,20 @@ class Query {
   }
   _addQueryTerms(terms) {
     terms = (terms.constructor === Array) ? terms : [terms]
-    return new Query(this.collections, [...this.qs, ...terms], this.params)
+    return this.newQueryFromFreshClone({qs: terms})
   }
   setBaseQuery(search) {
-    return new Query(this.collections, [search, ...this.qs.slice(1)], this.params)
+    return this.newQueryFromFreshClone({
+      qs: [search, ...this.qs.slice(1)],
+      override_qs: true
+    })
   }
   addTerm(name, search = '*', endSearch) {
     return this._addQueryTerms(this._qTerm(name, search, endSearch))
   }
   addParams(params) {
+    return this.newQueryFromFreshClone({params})
+  }
   removeParam(key) {
     let q = this.cloneFreshQuery()
     delete q.params[key]
@@ -277,6 +282,17 @@ class Query {
     q.params.page = 0
     q.params.start = 0
     return q
+  }
+  newQueryFromFreshClone({collections=[], qs=[], params={},
+                          override_collections=false,
+                          override_qs=false,
+                          override_params=false}) {
+    let q = this.cloneFreshQuery()
+    return new Query(
+      override_collections ? collections : [...q.collections, ...collections],
+      override_qs ? qs :                   [...q.qs, ...qs],
+      override_params ? params :           {...q.params, ...params}
+    )
   }
   sort(solrField, asc = true) { // what happens when one collection doesn't have the field?
     let ascDesc = asc ? 'asc' : 'desc'
@@ -299,7 +315,10 @@ class Query {
     }
   }
   setCollections(collections) {
-    return new Query(collections, this.qs, this.params)
+    return this.newQueryFromFreshClone({
+      collections,
+      override_collections: true
+    })
   }
   imagesOnly() {
     return this.addTerm('img')
