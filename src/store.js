@@ -464,6 +464,7 @@ export default new Vuex.Store({
         context.commit('setCollectionSort', asc)
         context.dispatch('runNewQuery', context.state.query.unsort())
       } else {
+        context.commit('setCollectionUnsort')
         context.dispatch('runNewQuery', context.state.query.sort(field, asc))
       }
     },
