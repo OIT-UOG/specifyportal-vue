@@ -23,7 +23,7 @@
 </template>
 
 <script>
-import { mapGetters, mapActions } from 'vuex'
+import { mapGetters, mapActions, mapState } from 'vuex'
 import _ from 'lodash'
 
 export default {
@@ -52,6 +52,7 @@ export default {
       }
       return 'search'
     },
+    ...mapState(['loaded'])
     // ...mapGetters(['moreToQuery'])
   },
   watch: {
@@ -59,6 +60,9 @@ export default {
       this.isTyping = true
       let query = this.searchQuery || '*'
       this.doSearch(query)
+    },
+    async loaded () {
+      await this.doSearch(this.searchQuery || '*')
     }
   },
   methods: {
@@ -89,7 +93,6 @@ export default {
         this.hinting = true
       }
     }, 10000);
-    await this.doSearch('*')
   },
 
 }
