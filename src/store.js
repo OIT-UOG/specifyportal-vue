@@ -267,8 +267,47 @@ class Query {
       override_qs: true
     })
   }
+  _termIndex(name) {
+    return ['', ...this.qs.slice(1)].findIndex((qt) => {
+      return name == qt.split(':')[0]
+    })
+  }
+  getTerm(name) {
+    let index = this._termIndex(name)
+    if (index < 0) { return false }
+    let term = this.qs[index].split(':')
+    let search = term[1]
+    let to = undefined
+    if (search[0]=='[' && search[search.length-1]==']') {
+      [search, to] = search.slice(1,-1).split(' TO ')
+    }
+    let ret = {
+      field: term[0],
+      search,
+      to
+    }
+    return ret
+  }
   addTerm(name, search = '*', endSearch) {
+    let index = this._termIndex(name)
+    let term = this._qTerm(name, search, endSearch)
+    if (index >= 0) {
+      return this.newQueryFromFreshClone({
+        qs: [...this.qs.slice(0,index), term, ...this.qs.slice(index+1)],
+        override_qs: true
+      })
+    }
     return this._addQueryTerms(this._qTerm(name, search, endSearch))
+  }
+  removeTerm(name) {
+    let index = this._termIndex(name)
+    if (index >= 0) {
+      return this.newQueryFromFreshClone({
+        qs: [...this.qs.slice(0,index), ...this.qs.slice(index+1)],
+        override_qs: true
+      })
+    }
+    return this
   }
   addParams(params) {
     return this.newQueryFromFreshClone({params})
@@ -455,6 +494,17 @@ export default new Vuex.Store({
     newSearchTerm(context, search) {
       context.dispatch('alterQuery',
         context.state.query.setBaseQuery(search)
+      )
+    },
+    addSearchTerm(context, { field, search, to = undefined }) {
+      console.log('q', field, search, to)
+      context.dispatch('alterQuery',
+        context.state.query.addTerm(field, search, to)
+      )
+    },
+    removeSearchTerm(context, field) {
+      context.dispatch('alterQuery',
+        context.state.query.removeTerm(field)
       )
     },
     alterQuery(context, newQuery) {
