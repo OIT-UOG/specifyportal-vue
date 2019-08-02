@@ -63,7 +63,7 @@ class Query {
       ...this.params
     }
     return [
-      `q=${this.qUrlParam}`.toLowerCase(),
+      `q=${this.qUrlParam}`,
       ...Object.keys(params).sort().map(
         key => `${key}=${encodeURIComponent(params[key])}`
       )
@@ -249,11 +249,11 @@ class Query {
     return this.setPage(Math.max(0, this.params.page - 1))
   }
   _qTerm(name, search, endSearch) {
-    let term = `${name}:`
+    let term = `${name.toLowerCase()}:`
     if (typeof endSearch === 'undefined') {
-      term += search
+      term += (''+search).toLowerCase()
     } else {
-      term += `[${search} TO ${endSearch}]`
+      term += `[${(''+search).toLowerCase()} TO ${(''+endSearch).toLowerCase()}]`
     }
     return term
   }
