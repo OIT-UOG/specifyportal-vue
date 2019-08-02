@@ -52,7 +52,11 @@ class Query {
     }, {})
   }
   get qUrlParam() {
-    return encodeURIComponent([...this.qs].sort().join(' AND '))
+    let qs = [...this.qs]
+    if (qs.length > 1 && qs[0] === '*') {
+      qs = qs.slice(1)
+    }
+    return encodeURIComponent(qs.sort().join(' AND '))
   }
   get urlParams() {
     let params = {
