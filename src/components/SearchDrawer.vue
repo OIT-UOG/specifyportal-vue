@@ -15,6 +15,7 @@
     <v-divider></v-divider>
 
     <v-list>
+    <AdvancedSearch/>
       <v-list-tile v-for="i in filters" :key="i">
         <v-list-tile-content>
           <v-list-tile-title>{{ i }}</v-list-tile-title>
@@ -26,21 +27,17 @@
 
 <script>
 import SimpleSearch from '@/components/SimpleSearch'
+import AdvancedSearch from '@/components/AdvancedSearch'
 
 export default {
   name: 'SearchDrawer',
   components: {
-    SimpleSearch
+    SimpleSearch,
+    AdvancedSearch
   },
   data () {
     return {
-      filters: [
-        'Collection',
-        'Scientific name',
-        'Location',
-        'Date',
-        '...'
-      ],
+      
     }
   }
 }
