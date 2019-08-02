@@ -80,10 +80,9 @@ export default {
       return this.advancedSearchColumns.map((h) => {
         
 		let custom = this.defaultFilter
-		// if (h.solrname in this.customFilters) {
-		// 	custom = this.customFilters[h.solrname]
-		// }
-		if ((h.solrtype === 'int' && !h.type.endsWith('String')) || h.solrtype === 'tdouble') {
+		if (h.solrname in this.customFilters) {
+			custom = this.customFilters[h.solrname]
+		} else if ((h.solrtype === 'int' && !h.type.endsWith('String')) || h.solrtype === 'tdouble') {
 			custom = {...this.rangeFilter}
 			if (h.type.endsWith('Calendar')) {
 				custom.max = new Date().getFullYear()
