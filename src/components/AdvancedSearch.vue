@@ -55,24 +55,24 @@ export default {
 	},
 	data () {
     return {
-      customFilters: {
-        coll: {
-          visible: true,
-          component: CollectionFilter
-        }
-			},
-			defaultFilter: {
+		customFilters: {
+			coll: {
 				visible: true,
-				component: StringFilter
-			},
-			rangeFilter: {
-				visible: true,
-				component: RangeFilter,
-				min: 0,
-				max: 100,
-				default: 50,
-				between: false
+				component: CollectionFilter
 			}
+		},
+		defaultFilter: {
+			visible: true,
+			component: StringFilter
+		},
+		rangeFilter: {
+			visible: true,
+			component: RangeFilter,
+			min: 0,
+			max: 100,
+			default: 50,
+			between: false
+		}
     }
   },
   computed: {
