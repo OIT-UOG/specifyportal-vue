@@ -4,6 +4,7 @@
     :hint="hint"
     label="Search all fields"
     solo
+    @keydown.enter="search_and_close"
     flat>
     <template v-slot:append>
       <v-fade-transition leave-absolute>
@@ -65,6 +66,12 @@ export default {
     }
   },
   methods: {
+    async search_and_close() {
+      if (this.$vuetify.breakpoint.name=='xs') {
+        this.setDrawer(false)
+        await this.search()
+      }
+    },
     async search () {
       this.searching = true
       let query = this.searchQuery
@@ -82,7 +89,7 @@ export default {
       this.isTyping = false
       this.isLoading = false
     }, 100),
-    ...mapActions(['newSearchTerm', 'runNewQuery'])
+    ...mapActions(['newSearchTerm', 'runNewQuery', 'setDrawer'])
   },
   async mounted () {
     this.hint_index = this.hints.length - 1

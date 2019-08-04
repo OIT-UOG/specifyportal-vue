@@ -423,8 +423,12 @@ export default new Vuex.Store({
     viewEntries: [],
     viewIndexes: {},
     collectionSort: false,
+    drawer: true,
   },
   mutations: {
+    setDrawer(state, open) {
+      state.drawer = open
+    },
     setQueryNextPage(state) {
       if (state.query.ran) {
         state.query = state.query.nextPage()
@@ -493,6 +497,9 @@ export default new Vuex.Store({
     },
   },
   actions: {
+    setDrawer(context, open) {
+      context.commit('setDrawer', open)
+    },
     newSearchTerm(context, search) {
       context.dispatch('alterQuery',
         context.state.query.setBaseQuery(search)
