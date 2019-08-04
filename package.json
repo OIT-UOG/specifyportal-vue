@@ -11,6 +11,7 @@
     "core-js": "^2.6.5",
     "dotenv-webpack": "^1.7.0",
     "lodash": "^4.17.11",
+    "string.prototype.matchall": "^3.0.1",
     "v-infinite-scroll": "^1.0.4",
     "vue": "^2.6.10",
     "vue-async-computed": "^3.7.0",

@@ -1,6 +1,8 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 import { normalize } from 'path';
+const matchAll = require('string.prototype.matchall');
+matchAll.shim()
 
 Vue.use(Vuex)
 
