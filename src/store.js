@@ -265,7 +265,7 @@ class Query {
   }
   setBaseQuery(search) {
     return this.newQueryFromFreshClone({
-      qs: [search, ...this.qs.slice(1)],
+      qs: [search.toLowerCase(), ...this.qs.slice(1)],
       override_qs: true
     })
   }
