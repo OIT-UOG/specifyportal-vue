@@ -14,7 +14,7 @@
 					<v-flex xs12>
 						<div class="caption font-weight-bold">{{ f.title }}</div>
 					</v-flex>
-					<v-flex xs12 v-if="f.search">
+					<v-flex xs12 v-if="f.search && !f.hide_checkboxes">
 						<v-checkbox 
 							class="small-checkbox my-1 caption"
 							hide-details
@@ -58,7 +58,8 @@ export default {
 		customFilters: {
 			coll: {
 				visible: true,
-				component: CollectionFilter
+				component: CollectionFilter,
+				hide_checkboxes: true
 			}
 		},
 		defaultFilter: {
