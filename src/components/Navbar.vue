@@ -8,6 +8,11 @@
       </v-toolbar-title>
       <v-spacer></v-spacer>
       <v-toolbar-items>
+      <FeedbackForm v-if="!xs" v-slot="{ on }">
+        <v-btn flat v-on="on" style="height: 100%">
+          <span>feedback</span>
+        </v-btn>
+      </FeedbackForm>
         <v-btn flat href="/">home</v-btn>
       </v-toolbar-items>
     </v-toolbar>
@@ -20,12 +25,16 @@
 
 <script>
 import SearchDrawer from '@/components/SearchDrawer'
+import FeedbackForm from '@/components/FeedbackForm'
+
 import { mapState, mapActions } from 'vuex'
+
 
 export default {
   name: 'Navbar',
   components: {
-    SearchDrawer
+    SearchDrawer,
+    FeedbackForm
   },
   data () {
     return {
@@ -40,6 +49,9 @@ export default {
       get() {
         return this.drawer
       }
+    },
+    xs () {
+      return this.$vuetify.breakpoint.name=='xs'
     },
     ...mapState(['drawer'])
   },
