@@ -19,14 +19,15 @@
       <SimpleSearch/>
     <v-divider></v-divider>
 
-    <v-list>
+    
     <AdvancedSearch/>
+    <!-- <v-list>
       <v-list-tile v-for="i in filters" :key="i">
         <v-list-tile-content>
           <v-list-tile-title>{{ i }}</v-list-tile-title>
         </v-list-tile-content>
       </v-list-tile>
-    </v-list>
+    </v-list> -->
   </div>
 </template>
 
