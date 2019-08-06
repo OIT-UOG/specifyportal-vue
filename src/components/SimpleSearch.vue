@@ -62,6 +62,9 @@ export default {
       await this.search()
     },
     async loaded () {
+      if (this.$route.query.q) {
+        this.searchQuery = this.$route.query.q
+      }
       await this.doSearch(this.searchQuery + '*')
     }
   },
