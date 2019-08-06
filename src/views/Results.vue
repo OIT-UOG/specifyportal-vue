@@ -41,12 +41,26 @@
       </tr>
     </template>
     <template v-slot:items="props">
-      <td class="tiny-column"></td>
-      <td
-        v-for="f of visibleCols"
-        :key=f.solrname
-        class="text-xs-right"
-      >{{ props.item[f.solrname] }}</td>
+      <EntryViewTooltip 
+        v-slot="{ on }" 
+        :entry="props.item">
+          <!-- v-on:dblclick="on.click" -->
+        <tr 
+          v-on="xs ? on : ( cardOpen ? {click: ()=>{}} : on)"
+        >
+        <!-- {click: ()=>{}} -->
+          <td class="tiny-column"></td>
+          <td
+            v-for="f of visibleCols"
+            :key=f.solrname
+            class="text-xs-right"
+          >
+          <span>
+            {{ props.item[f.solrname] }}
+          </span>
+          </td>
+        </tr>
+      </EntryViewTooltip>
     </template>
   </v-data-table>
 </template>
@@ -54,11 +68,13 @@
 <script>
 import { mapState, mapGetters, mapActions } from 'vuex'
 import ResultColumnVisibility from '@/components/ResultColumnVisibility'
+import EntryViewTooltip from '@/components/EntryViewTooltip'
 
 export default {
   name: 'Results',
   components: {
-    ResultColumnVisibility
+    ResultColumnVisibility,
+    EntryViewTooltip
   },
   data () {
     return {
@@ -92,10 +108,13 @@ export default {
         }
       })
     },
+    xs () {
+      return this.$vuetify.breakpoint.name=='xs'
+    },
     ...mapGetters(['numFound', 'colAttrs', 'visibleCols',
     // 'moreToQuery'
     ]),
-    ...mapState({entries: 'viewEntries', loading: 'queryLoading'})
+    ...mapState({entries: 'viewEntries', loading: 'queryLoading', cardOpen: 'cardOpen'})
   },
   methods: {
     async changeSort (column) {
