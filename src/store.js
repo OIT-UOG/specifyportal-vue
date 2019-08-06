@@ -415,6 +415,7 @@ export default new Vuex.Store({
     loaded: false,
     customSettings: {},
     collections: [],
+    visibleCollections: {},
     fields: {},
     entries: {},
     query: new Query([]),
@@ -482,6 +483,12 @@ export default new Vuex.Store({
     setCollections(state, collections) {
       state.collections = collections
     },
+    setVisibleCollections(state, visible) {
+      state.visibleCollections = state.collections.reduce((acc, curr) => {
+        acc[curr] = visible.includes(curr)
+        return acc
+      })
+    },
     setCollectionSort(state, asc) {
       state.collectionSort = { asc }
     },
@@ -501,6 +508,18 @@ export default new Vuex.Store({
     },
   },
   actions: {
+    setVisibleCollections(context, visible) {
+      console.log('colls visible', visible)
+      context.commit('setVisibleCollections', visible)
+      context.dispatch('alterQuery', context.state.query)
+    },
+    setVisibleCollection(context, { collection, visible }) {
+      console.log('collection', collection)
+      console.log('visible', visible)
+      let vis = context.state.visibleCollections
+      vis[collection] = visible
+      context.dispatch('setVisibleCollections', context.state.collections.filter(a => vis[a]))
+    },
     setDrawer(context, open) {
       context.commit('setDrawer', open)
     },
