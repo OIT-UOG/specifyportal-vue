@@ -23,6 +23,7 @@
         ></v-progress-circular>
       </v-layout>
       <div
+        v-if="use_summary"
         class="tv-thumb-summary"
       >
         {{ this.title }}
@@ -72,6 +73,11 @@ export default {
     alt: {
       type: String,
       required: false
+    },
+    use_summary: {
+      default: true,
+      type: Boolean,
+      required: false
     }
   },
   computed: {
@@ -96,7 +102,9 @@ export default {
       // console.log('self', self)
       // console.log('this', this)
       this.setParentDataWidth(self)
-      this.setSummary(self)
+      if (this.use_summary) {
+        this.setSummary(self)
+      }
     },
     setParentDataWidth(self){
       // determine data value based on ratio
