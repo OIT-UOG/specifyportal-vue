@@ -6,6 +6,11 @@
           <v-list-tile-title class="title text-lg-center">
             Search
           </v-list-tile-title>
+          <FeedbackForm v-if="xs" v-slot="{ on }">
+            <v-btn icon v-on="on">
+              <v-icon>feedback</v-icon>
+            </v-btn>
+          </FeedbackForm>
         </v-list-tile>
       </v-list>
     </v-toolbar>
@@ -28,17 +33,25 @@
 <script>
 import SimpleSearch from '@/components/SimpleSearch'
 import AdvancedSearch from '@/components/AdvancedSearch'
+import FeedbackForm from '@/components/FeedbackForm'
+
 
 export default {
   name: 'SearchDrawer',
   components: {
     SimpleSearch,
-    AdvancedSearch
+    AdvancedSearch,
+    FeedbackForm
   },
   data () {
     return {
       
     }
+  },
+  computed: {
+    xs () {
+      return this.$vuetify.breakpoint.name=='xs'
+    },
   }
 }
 </script>
