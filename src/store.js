@@ -424,10 +424,14 @@ export default new Vuex.Store({
     viewIndexes: {},
     collectionSort: false,
     drawer: true,
+    cardOpen: false,
   },
   mutations: {
     setDrawer(state, open) {
       state.drawer = open
+    },
+    setCardOpen(state, open) {
+      state.cardOpen = open
     },
     setQueryNextPage(state) {
       if (state.query.ran) {
@@ -499,6 +503,9 @@ export default new Vuex.Store({
   actions: {
     setDrawer(context, open) {
       context.commit('setDrawer', open)
+    },
+    setCardOpen(context, open) {
+      context.commit('setCardOpen', open)
     },
     newSearchTerm(context, search) {
       context.dispatch('alterQuery',
