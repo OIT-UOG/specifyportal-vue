@@ -89,6 +89,15 @@
           </v-card-actions>
           <v-progress-linear v-if="submitting" :indeterminate="true"></v-progress-linear>
         </v-card>
+        <v-layout justify-center align-center text-xs-center>
+          <v-dialog v-model="successMsg" max-width="200px">
+            <v-card>
+              <v-card-title primary-title>
+                <span class="headline">Thanks! <v-icon color="success">done_outline</v-icon></span>
+              </v-card-title>
+            </v-card>
+          </v-dialog>
+        </v-layout>
     </v-dialog>
   </v-layout>
 </template>
@@ -115,6 +124,7 @@ export default {
       formUrl: process.env.FORM_URL,
       githubLink: process.env.ISSUE_PAGE_LINK,
       success: false,
+      successMsg: false,
       submitting: false
     }
   },
@@ -124,13 +134,77 @@ export default {
     },
     is_issue () {
       return this.issue != 'suggestion'
-    }
+    },
+    browserInfo() {
+      // http://mrbool.com/how-to-detect-different-browsers-and-their-versions-using-javascript/25424
+      var objappVersion = navigator.appVersion;
+      var objAgent = navigator.userAgent;
+      var objbrowserName  = navigator.appName;
+      var objfullVersion  = ''+parseFloat(navigator.appVersion); 
+      var objBrMajorVersion = parseInt(navigator.appVersion,10);
+      var objOffsetName,objOffsetVersion,ix;
+
+      // In Chrome
+      if ((objOffsetVersion=objAgent.indexOf("Chrome"))!=-1) {
+      objbrowserName = "Chrome";
+      objfullVersion = objAgent.substring(objOffsetVersion+7);
+      }
+      // In Microsoft internet explorer
+      else if ((objOffsetVersion=objAgent.indexOf("MSIE"))!=-1) {
+      objbrowserName = "Microsoft Internet Explorer";
+      objfullVersion = objAgent.substring(objOffsetVersion+5);
+      }
+
+      // In Firefox
+      else if ((objOffsetVersion=objAgent.indexOf("Firefox"))!=-1) {
+      objbrowserName = "Firefox";
+      }
+      // In Safari
+      else if ((objOffsetVersion=objAgent.indexOf("Safari"))!=-1) {
+      objbrowserName = "Safari";
+      objfullVersion = objAgent.substring(objOffsetVersion+7);
+      if ((objOffsetVersion=objAgent.indexOf("Version"))!=-1) 
+        objfullVersion = objAgent.substring(objOffsetVersion+8);
+      }
+      // For other browser "name/version" is at the end of userAgent
+      else if ( (objOffsetName=objAgent.lastIndexOf(' ')+1) < 
+                (objOffsetVersion=objAgent.lastIndexOf('/')) ) 
+      {
+      objbrowserName = objAgent.substring(objOffsetName,objOffsetVersion);
+      objfullVersion = objAgent.substring(objOffsetVersion+1);
+      if (objbrowserName.toLowerCase()==objbrowserName.toUpperCase()) {
+        objbrowserName = navigator.appName;
+      }
+      }
+      // trimming the fullVersion string at semicolon/space if present
+      if ((ix=objfullVersion.indexOf(";"))!=-1)
+        objfullVersion=objfullVersion.substring(0,ix);
+      if ((ix=objfullVersion.indexOf(" "))!=-1)
+        objfullVersion=objfullVersion.substring(0,ix);
+
+      objBrMajorVersion = parseInt(''+objfullVersion,10);
+      if (isNaN(objBrMajorVersion)) {
+        objfullVersion  = ''+parseFloat(navigator.appVersion); 
+        objBrMajorVersion = parseInt(navigator.appVersion,10);
+      }
+      return `
+      Browser name: ${objbrowserName}
+      Full version: ${objfullVersion}
+      Major version: ${objBrMajorVersion}
+      
+      navigator.appName: ${navigator.appName}
+      navigator.userAgent: ${navigator.userAgent}`
+    },
   },
   methods: {
     async submit () {
+      if (this.submitting) {
+        return false
+      }
       if (this.$refs.form.validate()) {
         this.submitting = true
         console.log(this.formUrl)
+        let bi = this.browserInfo
         let resp = await fetch(this.formUrl, {
           method: 'POST',
           mode: 'cors',
@@ -141,13 +215,18 @@ export default {
             occupations: this.selected_occupations,
             type: this.issue,
             title: this.title,
-            description: this.description
+            description: this.description,
+            browserInfo: bi
           })
         })
         if (resp.status==200) {
           this.submitting = false
-          this.dialog = false
           this.success = true
+          this.successMsg = true
+          setTimeout(() => {
+            this.successMsg = false
+            this.dialog = false
+          }, 1000);
         } else {
           console.log('error in response', resp)
           this.submitting = false
