@@ -4,8 +4,7 @@
 	>
 
 		<v-expansion-panel-content
-			v-for="f in filters"
-			v-if="f.visible"
+			v-for="f in visibleFilters"
 			:key="f.colkey"
 			class="smaller-panel"
 		>
@@ -111,6 +110,9 @@ export default {
 					...custom
         }
       })
+    },
+    visibleFilters () {
+      return this.filters.filter(f => f.visible)
     },
 		...mapState(['query']),
     ...mapGetters(['advancedSearchColumns'])
