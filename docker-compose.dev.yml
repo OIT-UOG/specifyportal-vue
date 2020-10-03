@@ -1,0 +1,14 @@
+version: '3'
+services:
+  viewer:
+    build:
+      args:
+        - NODE_ENV=development
+    volumes:
+      - ./src:/app/src:rw
+      - ./public:/app/public:rw
+      # config folder later?
+      - ./vue.config.js:/app/vue.config.js:rw
+      - ./babel.config.js:/app/babel.config.js:rw
+      - ./.env:/app/.env:ro
+    command: npm run serve
