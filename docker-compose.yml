@@ -1,17 +1,50 @@
 version: '3'
 services:
   api:
-    build: "https://github.com/OIT-UOG/specify-webportal-installer.git#vue-rewrite"
-    restart: always
+    build: "https://github.com/OIT-UOG/specify-webportal-installer.git${SPECIFY_API_BRANCH}"
     volumes:
-      - ./build/:/usr/local/tomcat/webapps/apps/:ro
+      - build:/usr/local/tomcat/webapps/apps/:ro
+      - root:/usr/local/tomcat/webapps/ROOT/:ro
     environment:
       - VIRTUAL_PORT=8080
-  nginx:
-    image: "jwilder/nginx-proxy"
-    restart: always
+      - VIRTUAL_HOST=${HOSTNAME}
+      - LETSENCRYPT_HOST=${HOSTNAME}
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+    restart: on-failure
+  
+  api_middleman:
+    build: "https://github.com/OIT-UOG/Specify-API-Middleman-API.git"
     ports:
-      - "443:443"
+      - "8000"
+    environment:
+      - API_URL=api:8080
+      - VIRTUAL_PORT=8000
+      - VIRTUAL_HOST=${API_URL}
+      - LETSENCRYPT_HOST=${API_URL}
+    restart: on-failure
+
+  frontpage:
+    build: "https://github.com/OIT-UOG/specify-vue-frontpage.git${FRONTPAGE_BRANCH}"
+    depends_on: 
+      - api
     volumes:
-      - /var/run/docker.sock:/tmp/docker.sock:ro
-      - ${SP_CERTS_PATH}:/etc/nginx/certs
+      - root:/app/transfer
+    command: /bin/sh -c "npm run build && cp -r dist/* transfer && cd transfer && sh insert_google_analytics.sh"
+
+  viewer:
+    build: .
+    depends_on:
+      - api
+    environment:
+      - MAPS_API_KEY=${MAPS_API_KEY}
+      - FORM_URL=${FORM_URL}
+      - ISSUE_PAGE_LINK=${ISSUE_PAGE_LINK}
+      - API_URL=${API_URL}
+    volumes:
+      - build:/app/build
+
+volumes:
+  build:
+  root:
+  share:
+
