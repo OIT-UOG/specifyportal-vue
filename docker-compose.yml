@@ -13,11 +13,12 @@ services:
     restart: on-failure
   
   api_middleman:
-    build: "https://github.com/OIT-UOG/Specify-API-Middleman-API.git"
+    build: "https://github.com/OIT-UOG/Specify-API-Middleman-API.git${MIDDLEMAN_BRANCH}"
     ports:
       - "8000"
     environment:
-      - API_URL=api:8080
+      - API_URL=http://api:8080
+      - APP_URL=$HOSTNAME
       - VIRTUAL_PORT=8000
       - VIRTUAL_HOST=${API_URL}
       - LETSENCRYPT_HOST=${API_URL}
