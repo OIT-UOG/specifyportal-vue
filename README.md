@@ -1,29 +1,19 @@
 # viewer
 
-## Project setup
-```
-yarn install
-```
+Currently, this contains a `docker-compose.yml` to build all (except reflib, but we'll add that later) the repos for the "Specify" web app and serve them together.
 
-### Compiles and hot-reloads for development
-```
-yarn run serve
-```
+During dev or with updates, it may be prudent to start from scratch (assuming things haven't changed requiring us to persist data in volumes). You can do so by running the following to spin down the current app including any dangling services and networks
 
-### Compiles and minifies for production
-```
-yarn run build
-```
+`docker-compose down --remove-orphans`
 
-### Run your tests
-```
-yarn run test
-```
+To be extra sure, you can remove the volumes created like so (replace `viewer` with the directory name this is in)
 
-### Lints and fixes files
-```
-yarn run lint
-```
+`docker volume rm viewer_build viewer_certs viewer_root viewer_share viewer_sock viewer_vhost`
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+or maybe better done via:
+
+`docker-compose -f docker-compose.yml -f nginx-proxy-compose.yaml -f docker-compose.dev.yml down --volumes`
+
+To spin it up with nginx and ssl included, you can add the `nginx-proxy-compose.yml` compose file alonside the default one like so: `docker-compose -f docker-compose.yml -f nginx-proxy-compose.yaml up ...`
+
+To spin up a dev version with hot-reloading of Viewer in specific, you can add the `docker-compose.dev.yml` file as well. Taking into account what was mentioned above, the command to run this in dev mode with nginx/ssl might look like `docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f nginx-proxy-compose.yaml up --force-recreate --build`
