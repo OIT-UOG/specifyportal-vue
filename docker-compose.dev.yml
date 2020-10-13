@@ -4,6 +4,8 @@ services:
     build:
       args:
         - NODE_ENV=development
+    environment:
+      - NODE_ENV=development
     volumes:
       - ./src:/app/src:rw
       - ./public:/app/public:rw
@@ -12,3 +14,6 @@ services:
       - ./babel.config.js:/app/babel.config.js:rw
       - ./.env:/app/.env:ro
     command: npm run serve
+  api_middleman:
+    environment:
+      - APP_URL=http://$HOSTNAME

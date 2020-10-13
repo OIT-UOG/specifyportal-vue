@@ -1,5 +1,8 @@
 FROM node:lts-alpine
 
+# for "healthchecks before deploy"
+RUN apk --no-cache add curl
+
 WORKDIR /app
 
 COPY package*.json ./
