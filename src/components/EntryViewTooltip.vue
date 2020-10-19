@@ -3,7 +3,7 @@
     <v-dialog
       v-if="xs"
       v-model="menu"
-      scrollable 
+      scrollable
       :max-width="width"
       :width="width"
       transition="dialog-transition"
@@ -12,7 +12,7 @@
       <template v-slot:activator="{ on }">
         <slot :on="on"></slot>
       </template>
-      
+
       <v-slide-x-transition>
       <v-btn v-show="showBtn" absolute fab right flat small :ripple="false"
         @click="menu = false"
@@ -53,7 +53,7 @@
       </EntryViewCard>
     </v-menu>
   <!-- </template> -->
-  
+
 </template>
 
 <script>
@@ -90,17 +90,15 @@ export default {
   },
   computed: {
     xs () {
-      console.log(this.entry)
       return this.$vuetify.breakpoint.name=='xs'
     },
-    ...mapGetters(['getSpecimenById', 'imageUrl']) 
+    ...mapGetters(['getSpecimenById', 'imageUrl'])
   },
   watch: {
     menu () {
       this.setCardOpen(this.menu)
       if (this.menu) {
         setTimeout(() => {
-          console.log('ok', this.showBtn)
           this.showBtn = true
         }, 300);
       } else {

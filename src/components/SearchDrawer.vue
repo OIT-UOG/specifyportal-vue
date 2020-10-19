@@ -19,7 +19,7 @@
       <SimpleSearch/>
     <v-divider></v-divider>
 
-    
+
     <AdvancedSearch/>
     <!-- <v-list>
       <v-list-tile v-for="i in filters" :key="i">
@@ -46,7 +46,7 @@ export default {
   },
   data () {
     return {
-      
+
     }
   },
   computed: {

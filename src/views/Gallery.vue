@@ -88,8 +88,7 @@ export default {
     loadedImages () {
       return this.images.slice(0, this.index + 1)
     },
-    ...mapGetters(['imageUrl', 'getSpecimenById']),
-    ...mapGetters({images: 'viewImages'})
+    ...mapGetters(['imageUrl', 'getSpecimenById', 'images']),
   },
   methods: {
     onResize () {

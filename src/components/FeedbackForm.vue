@@ -23,8 +23,8 @@
                 target="_blank" -->
               <v-layout wrap>
                 <v-flex xs12 style="text-indent: 1em;">
-                  This site is still in development. 
-                  Its future functionality and look and feel are based on your input, 
+                  This site is still in development.
+                  Its future functionality and look and feel are based on your input,
                   so please let us know if there is anything you would like us to add, change, or fix.
                 </v-flex>
                 <v-flex xs12 sm6>
@@ -50,9 +50,9 @@
                   ></v-select>
                 </v-flex>
                 <v-flex xs12>
-                  <v-text-field 
+                  <v-text-field
                     name="title"
-                    label="Title*" 
+                    label="Title*"
                     v-model="title"
                     :rules="[v => !!v || 'Title is required']"
                     hint="Summary of your suggestion or bug"
@@ -73,7 +73,7 @@
                   ></v-textarea>
                 </v-flex>
                 <v-flex xs12>
-                Open issues and suggestions can be viewed <a :href="githubLink" taget="_blank">on github</a>. 
+                Open issues and suggestions can be viewed <a :href="githubLink" taget="_blank">on github</a>.
                 If you would like to follow discussions on the issues you submit,
                 please make an account there.
                 </v-flex>
@@ -140,7 +140,7 @@ export default {
       var objappVersion = navigator.appVersion;
       var objAgent = navigator.userAgent;
       var objbrowserName  = navigator.appName;
-      var objfullVersion  = ''+parseFloat(navigator.appVersion); 
+      var objfullVersion  = ''+parseFloat(navigator.appVersion);
       var objBrMajorVersion = parseInt(navigator.appVersion,10);
       var objOffsetName,objOffsetVersion,ix;
 
@@ -163,12 +163,12 @@ export default {
       else if ((objOffsetVersion=objAgent.indexOf("Safari"))!=-1) {
       objbrowserName = "Safari";
       objfullVersion = objAgent.substring(objOffsetVersion+7);
-      if ((objOffsetVersion=objAgent.indexOf("Version"))!=-1) 
+      if ((objOffsetVersion=objAgent.indexOf("Version"))!=-1)
         objfullVersion = objAgent.substring(objOffsetVersion+8);
       }
       // For other browser "name/version" is at the end of userAgent
-      else if ( (objOffsetName=objAgent.lastIndexOf(' ')+1) < 
-                (objOffsetVersion=objAgent.lastIndexOf('/')) ) 
+      else if ( (objOffsetName=objAgent.lastIndexOf(' ')+1) <
+                (objOffsetVersion=objAgent.lastIndexOf('/')) )
       {
       objbrowserName = objAgent.substring(objOffsetName,objOffsetVersion);
       objfullVersion = objAgent.substring(objOffsetVersion+1);
@@ -184,14 +184,14 @@ export default {
 
       objBrMajorVersion = parseInt(''+objfullVersion,10);
       if (isNaN(objBrMajorVersion)) {
-        objfullVersion  = ''+parseFloat(navigator.appVersion); 
+        objfullVersion  = ''+parseFloat(navigator.appVersion);
         objBrMajorVersion = parseInt(navigator.appVersion,10);
       }
       return `
       Browser name: ${objbrowserName}
       Full version: ${objfullVersion}
       Major version: ${objBrMajorVersion}
-      
+
       navigator.appName: ${navigator.appName}
       navigator.userAgent: ${navigator.userAgent}`
     },

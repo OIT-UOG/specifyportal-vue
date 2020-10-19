@@ -46,8 +46,9 @@ export default {
   },
   computed: {
     headers () {
-      console.log(this.allCols)
-      return this.allCols.map((h) => {
+      return this.allColumns.filter((h) => {
+        return h.solrname !== "img";
+      }).map((h) => {
         return {
           text: h.title,
           value: h.solrname,
@@ -55,7 +56,7 @@ export default {
         }
       })
     },
-    ...mapGetters(['allCols'])
+    ...mapGetters(['allColumns'])
   },
   methods: {
     toggleColumnVisibility(header) {

@@ -31,25 +31,13 @@ export default {
     }
   },
   computed: {
-    ...mapState(['geoFacetsOn']),
-    ...mapGetters(['geoFacets']),
-  },
-  watch: {
-    geoFacetsOn(newVal, oldVal) {
-      if (!newVal) {
-        this.setGeoFacets(true)
-      }
-    }
+    ...mapState(['geoFacets']),
   },
   methods: {
-    ...mapActions(['setGeoFacets', 'runNewQuery'])
+    ...mapActions(['runNewQuery'])
   },
   async mounted () {
-    this.setGeoFacets(true)
     await this.runNewQuery()
-  },
-  destroyed () {
-    this.setGeoFacets(false)
   },
 }
 </script>

@@ -3,7 +3,7 @@
     :headers="visHeaders"
     :items="pageEntries"
     :rows-per-page-items="rowsPerPage"
-    :total-items="numFound"
+    :total-items="total"
     :loading="loading"
     :pagination.sync="pagination"
   >
@@ -41,17 +41,17 @@
       </tr>
     </template>
     <template v-slot:items="props">
-      <EntryViewTooltip 
-        v-slot="{ on }" 
+      <EntryViewTooltip
+        v-slot="{ on }"
         :entry="props.item">
           <!-- v-on:dblclick="on.click" -->
-        <tr 
+        <tr
           v-on="xs ? on : ( cardOpen ? {click: ()=>{}} : on)"
         >
         <!-- {click: ()=>{}} -->
           <td class="tiny-column"></td>
           <td
-            v-for="f of visibleCols"
+            v-for="f of visibleColumns"
             :key=f.solrname
             class="text-xs-right"
           >
@@ -101,7 +101,7 @@ export default {
   },
   computed: {
     visHeaders () {
-      return this.visibleCols.map((h) => {
+      return this.visibleColumns.map((h) => {
         return {
           text: h.title,
           value: h.solrname
@@ -111,10 +111,8 @@ export default {
     xs () {
       return this.$vuetify.breakpoint.name=='xs'
     },
-    ...mapGetters(['numFound', 'colAttrs', 'visibleCols',
-    // 'moreToQuery'
-    ]),
-    ...mapState({entries: 'viewEntries', loading: 'queryLoading', cardOpen: 'cardOpen'})
+    ...mapGetters(['visibleColumns',]),
+    ...mapState({entries: 'entries', loading: 'queryLoading', cardOpen: 'cardOpen', total: 'total'})
   },
   methods: {
     async changeSort (column) {
@@ -130,12 +128,13 @@ export default {
         this.pagination.sortBy = column
         this.pagination.descending = false
       }
+
       this.sort({
         field: this.pagination.sortBy,
         asc: this.pagination.descending
       })
     },
-    ...mapActions(['more', 'sort', 'unsort', 'runNewQuery'])
+    ...mapActions(['more', 'sort', 'unsort'])
   }
 }
 </script>

@@ -114,7 +114,6 @@ export default {
   },
   computed: {
     xs () {
-      console.log(this.entry)
       return this.$vuetify.breakpoint.name=='xs'
     },
     geo_coords () {
@@ -127,7 +126,6 @@ export default {
       return this.showMap && Boolean(this.geo_coords)
     },
     showCarousel () {
-      console.log(this.entry.coll,'should show coords: ', this.geo_coords)
       return this.entry.img || this.showCoords
     },
     zoom () {
@@ -137,9 +135,7 @@ export default {
       return [this.entry.ge, this.entry.sp].map(a => a && a.trim()).filter(Boolean).join(' ')
     },
     relaventFields () {
-      return this.visibleCols.filter((f) => {
-        console.log('over here', f)
-        console.log(!['ge', 'sp', 'l1', 'l11'].includes(f.solrname))
+      return this.visibleColumns.filter((f) => {
         return !['ge', 'sp', 'l1', 'l11'].includes(f.solrname)
       })
     },
@@ -153,14 +149,10 @@ export default {
     isMapPage () {
       return this.caro_i == this.mapi
     },
-    ...mapGetters(['getSpecimenById', 'imageUrl', 'visibleCols']) 
-  },
-  mounted () {
-    console.log('mounted', this.entry.coll)
+    ...mapGetters(['getSpecimenById', 'imageUrl', 'visibleColumns'])
   },
   methods: {
     toggleZoom () {
-      console.log(this.zoom)
       this.zoomi += 1
       this.zoomi %= this.zooms.length
     },
@@ -182,8 +174,8 @@ export default {
       let q = "daddr=" + this.geo_coords.lat + "," + this.geo_coords.lng + "&amp;ll="
       // https://medium.com/@colinlord/opening-native-map-apps-from-the-mobile-browser-afd66fbbb8a4
       if /* if we're on iOS, open in Apple Maps */
-        ((navigator.platform.indexOf("iPhone") != -1) || 
-        (navigator.platform.indexOf("iPad") != -1) || 
+        ((navigator.platform.indexOf("iPhone") != -1) ||
+        (navigator.platform.indexOf("iPad") != -1) ||
         (navigator.platform.indexOf("iPod") != -1))
         window.open("maps://maps.google.com/maps?" + q);
       else /* else use Google */
@@ -193,7 +185,7 @@ export default {
 }
 </script>
 
-// 
+
 <style>
 .no-background .v-carousel__controls {
   background: rgba(0,0,0,0) !important;
