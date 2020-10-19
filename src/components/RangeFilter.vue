@@ -22,7 +22,7 @@
 				class="align-center"
 				:min="min"
 				:max="max"
-				@input="submit"
+				@input="submit(false)"
 				style="margin-top: 4px"
 			></v-range-slider>
 				<!-- thumb-label="always"
@@ -33,18 +33,13 @@
 				class="align-center point-slider"
 				:min="min"
 				:max="max"
-				@input="submit"
+				@input="submit(false)"
 				track-color="failure"
 				thumb-label="always"
 				:thumb-size="ts"
 			></v-slider>
 		</v-flex>
 		<v-flex xs6>
-			<!-- <v-switch class="xs6" 
-				label="between" 
-				v-model="m_between"
-				hide-details
-			></v-switch> -->
 			<v-btn class="xs6" color="primary"
 				small
 				:depressed="m_between"
@@ -52,11 +47,11 @@
 				@click="m_between = !m_between"
 			>between</v-btn>
 		</v-flex>
-		<v-flex xs6>		
+		<v-flex xs6>
 			<v-btn class="xs6" color="primary"
 				small
 				outline
-				@click="submit"
+				@click="submit(true)"
 			>add</v-btn>
 		</v-flex>
 	</v-layout>
@@ -65,6 +60,7 @@
 
 <script>
 import { mapActions, mapGetters, mapState } from 'vuex'
+import _ from 'lodash'
 
 export default {
 	props: {
@@ -72,7 +68,12 @@ export default {
 		colkey: String,
 		min: Number,
 		max: Number,
-		between: Boolean,
+    between: Boolean,
+    prop_factory: {
+      type: Function,
+      required: false,
+      default: (self) => {}
+    },
 		default: [Number, Array],
 		breakpoints: {
 			type: Object,
@@ -85,7 +86,7 @@ export default {
 			stuff: 0,
 			stuffs: [0,100],
 			m_between: false,
-			ts: 30
+      ts: 30
 		}
   },
   computed: {
@@ -125,21 +126,36 @@ export default {
 			let noff = delta * nrange
 			return Math.round(noff + prevbp[1])
 		})
-	},
-	...mapState(['collections'])
+  },
+
+	...mapGetters(['collections', 'getQueryTerm'])
   },
 	methods: {
-		submit() {
+		submit: _.debounce(async function(add) {
 			let search = this.stuff
 			let to = undefined
+      let newTerm = search
 			if (this.m_between) {
-				[ search, to ] = this.between_vals
-			}
-			this.addSearchTerm({ field: this.colkey, search, to })
-			this.runNewQuery()
-		},
-		...mapActions(['addSearchTerm', 'runNewQuery'])
-	},
+        [ search, to ] = this.between_vals
+        newTerm = [search, to]
+      }
+
+      let qt = this.getQueryTerm(this.colkey);
+      let list = qt.list;
+      if (list.length > 0) {
+        list[list.length-1] = newTerm;
+      } else {
+        list = [newTerm];
+      }
+
+      if (add) {
+        list.push(newTerm);
+      }
+
+			this.setQueryField({ field: this.colkey, and: qt.and, list })
+    }, 150),
+		...mapActions(['setQueryField'])
+  },
 	created () {
 		this.m_between = this.between
 		if (this.between) {
@@ -148,7 +164,8 @@ export default {
 		} else {
 			this.stuff = this.default
 			this.stuffs = [this.min, this.stuff]
-		}
+    }
+    this.prop_factory(this)
 	}
 }
 </script>

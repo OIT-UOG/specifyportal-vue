@@ -23,14 +23,18 @@ export default {
 		return {
 			stuff: ""
 		}
-  	},
+    },
+  computed: {
+    ...mapGetters(['getQueryTerm']),
+  },
 	methods: {
 		submit(e) {
-			this.addSearchTerm({ field: this.colkey, search: this.stuff })
+      let qt = this.getQueryTerm(this.colkey);
+      qt.list.push(this.stuff)
+      this.setQueryField({ field: this.colkey, and: qt.and, list: qt.list })
 			this.stuff = ""
-			this.runNewQuery()
 		},
-		...mapActions(['addSearchTerm', 'runNewQuery'])
+		...mapActions(['setQueryField'])
 	}
 }
 </script>

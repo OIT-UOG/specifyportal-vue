@@ -87,12 +87,11 @@ export default {
     doSearch: _.debounce(async function(search) {
       this.isLoading = true
       let query = search || this.searchQuery
-      this.newSearchTerm(query)
-      await this.runNewQuery()
+      await this.setSearchTerms([query])
       this.isTyping = false
       this.isLoading = false
     }, 100),
-    ...mapActions(['newSearchTerm', 'runNewQuery', 'setDrawer'])
+    ...mapActions(['setSearchTerms', 'setDrawer'])
   },
   async mounted () {
     this.hint_index = this.hints.length - 1

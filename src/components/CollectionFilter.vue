@@ -1,16 +1,15 @@
 <template>
-	<v-container align-center text-xs-center pa-3>
-		<v-layout row wrap justify-center align-center>	
+	<v-container align-center text-xs-center px-3 pb-3 pt-0>
+		<v-layout row wrap justify-center align-center>
 			<v-flex xs12 pa-0 ma-0
 				v-for="coll in collections"
 			>
-				<v-checkbox 
-					:label="coll.endsWith('vouchers')? (coll.slice(0, coll.length-'vouchers'.length)) : coll " 
+				<v-checkbox
+					:label="coll"
 					class="my-1 caption"
 					hide-details
-					disabled
 					:input-value="visibleCollections[coll]"
-					@change="setVisibleCollection({ collection: coll, visible: !visibleCollections[coll]})"
+					@change="setCollFilter(coll, !visibleCollections[coll])"
 				></v-checkbox>
 				<!-- <v-progress-linear
 					v-model="collection_count[coll]"
@@ -33,24 +32,42 @@ import { mapActions, mapGetters, mapState } from 'vuex'
 export default {
 	data () {
 		return {
-
+      and: false,
 		}
 	},
 	computed: {
 		collection_count() {
 			let i = 10
 			return this.collections.reduce((acc, coll) => {
-				console.log('entries', this.entries)
 				acc[coll] = i
 				i += 10
 				return acc
 			}, {})
-		},
-		...mapGetters(['entries']),
-		...mapState(['collections', 'visibleCollections'])
+    },
+    visibleCollections() {
+      let vColls = this.collections.reduce((acc, coll) => {
+        acc[coll] = false;
+        return acc;
+      }, {});
+      this.getQueryTerm('coll').list.forEach((coll) => {
+        vColls[coll] = true;
+      });
+      return vColls;
+    },
+		...mapGetters(['collections', 'getQueryTerm']),
 	},
 	methods: {
-		...mapActions(['setVisibleCollection'])
+    ...mapActions(['setQueryField']),
+    setCollFilter(coll, selected) {
+      let list = this.collections.filter((c) => {
+        if (c === coll) {
+          return selected;
+        } else {
+          return this.visibleCollections[c];
+        }
+      })
+      this.setQueryField({ field: 'coll', and: this.and, list })
+    },
 	}
 }
 </script>
