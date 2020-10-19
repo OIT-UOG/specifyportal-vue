@@ -29,6 +29,9 @@ export default {
   },
 	methods: {
 		submit(e) {
+      if (!this.stuff) {
+        return;
+      }
       let qt = this.getQueryTerm(this.colkey);
       qt.list.push(this.stuff)
       this.setQueryField({ field: this.colkey, and: qt.and, list: qt.list })
