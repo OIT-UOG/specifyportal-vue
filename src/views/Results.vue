@@ -5,6 +5,7 @@
     :rows-per-page-items="rowsPerPage"
     :total-items="total"
     :loading="loading"
+    :no-data-text="queryMessage || 'No data available'"
     :pagination.sync="pagination"
   >
     <template v-slot:headers="props">
@@ -112,7 +113,7 @@ export default {
       return this.$vuetify.breakpoint.name=='xs'
     },
     ...mapGetters(['visibleColumns',]),
-    ...mapState({entries: 'entries', loading: 'queryLoading', cardOpen: 'cardOpen', total: 'total'})
+    ...mapState({queryMessage: 'queryMessage', entries: 'entries', loading: 'queryLoading', cardOpen: 'cardOpen', total: 'total'})
   },
   methods: {
     async changeSort (column) {

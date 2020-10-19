@@ -43,6 +43,7 @@ class Query {
     this.lastPageNumber = null;
     this.total = null;
     this.facet_counts = {};
+    this.msg = null;
   }
 
   get url() {
@@ -75,11 +76,19 @@ class Query {
     const call = await fetch(this.url, { signal });
     const res = await call.json();
     if ("detail" in res) {
-      if (res.detail.startsWith("last page is -1, requested page was")) {
+      if ("error" in res.detail && res.detail.error.code === 400) {
         this.results = [];
         this.total = 0;
         this.lastPageNumber = -1;
         this.facet_counts = [];
+        this.msg = "Error in query";
+        return [];
+      } else if (res.detail.startsWith("last page is -1, requested page was")) {
+        this.results = [];
+        this.total = 0;
+        this.lastPageNumber = -1;
+        this.facet_counts = [];
+        this.msg = "No data available";
         return [];
       }
     }
@@ -146,6 +155,7 @@ export default new Vuex.Store({
     queryTerms: {},
     queryLoading: false,
     queryRan: false,
+    queryMessage: null,
     sort: {
       field: null,
       asc: false,
@@ -200,6 +210,9 @@ export default new Vuex.Store({
     addEntries(state, entries) {
       state.entries.push(...entries);
     },
+    setQueryMessage(state, msg) {
+      state.queryMessage = msg;
+    },
     setTotal(state, total) {
       state.total = total;
     },
@@ -223,7 +236,6 @@ export default new Vuex.Store({
       }
 
       const fs = Object.entries(state.queryTerms).filter(([field, {and, list}]) => {
-        console.log('field', field, field !== 'coll', list)
         return field !== 'coll' && list.length > 0
       }).map(([field, {and, list}]) => {
         return [
@@ -246,6 +258,7 @@ export default new Vuex.Store({
       }
 
       state.query = new Query(params)
+      state.queryMessage = null;
       state.queryRan = false;
     },
     setSearchTerms(state, terms) {
@@ -426,6 +439,7 @@ export default new Vuex.Store({
       context.commit("setGeoFacets", query.facet_counts);
       context.commit("setTotal", query.total);
       context.commit("setLastPage", query.lastPageNumber);
+      context.commit("setQueryMessage", query.msg);
     },
     async more(context) {
       let query = context.state.query;
