@@ -165,7 +165,7 @@ export default new Vuex.Store({
     apiSyntax: {},
     fields: {},
     fieldList: [],
-    entries: {},
+    entries: [],
     query: null,
     geoFacets: [],
     total: null, // fill this
