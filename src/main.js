@@ -25,11 +25,18 @@ Vue.use(VueGoogleMaps, {
   },
 });
 
+let { API_URL } = process.env;
+
+if (!API_URL.startsWith('http')) {
+  const s = process.env.NODE_ENV === 'development' ? '' : 's';
+  API_URL = `http${s}://${API_URL}`;
+}
+
 new Vue({
   router,
   store,
   render: h => h(App),
   async created() {
-    await this.$store.dispatch('loadSettings');
+    await this.$store.dispatch('loadSettings', API_URL);
   },
 }).$mount('#app');
