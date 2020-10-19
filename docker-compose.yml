@@ -30,7 +30,7 @@ services:
       - api
     volumes:
       - root:/app/transfer
-    command: /bin/sh -c 'npm run build && while [[ "$$(curl --connect-timeout 5 -s -o /dev/null -w ''%{http_code}'' api:8080/specify-solr/)" != "200" ]]; do echo ..; sleep 5; done; cp -r dist/* transfer && cd transfer && sh insert_google_analytics.sh && echo transferred'
+    command: /bin/sh -c 'npm run build && echo built && while [[ "$$(curl --connect-timeout 5 -s -o /dev/null -w ''%{http_code}'' api:8080/specify-solr/)" != "200" ]]; do echo ..; sleep 5; done; cp -r dist/* transfer && cd transfer && sh insert_google_analytics.sh && echo transferred'
 
   viewer:
     build: .
@@ -43,7 +43,8 @@ services:
       - API_URL=${API_URL}
     volumes:
       - build:/app/build
-    command: /bin/sh -c 'npm run build && while [[ "$$(curl --connect-timeout 5 -s -o /dev/null -w ''%{http_code}'' api:8080/specify-solr/)" != "200" ]]; do echo ..; sleep 5; done; cp -r build/temp/* build/viewer/ && echo transferred'
+      - root:/app/transfer:ro
+    command: /bin/sh -c 'npm run build && mkdir build/viewer && echo built && while [[ "$$(curl --connect-timeout 5 -s -o /dev/null -w ''%{http_code}'' api:8080/specify-solr/)" != "200" ]]; do echo ..; sleep 5; done; cp -r temp/* build/viewer/ && for f in transfer/*google*; do cp "$$f" build/viewer/ && cd build/viewer && sh insert_google_analytics.sh && echo transferred'
 
 volumes:
   build:
