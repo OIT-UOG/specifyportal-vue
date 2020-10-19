@@ -22,6 +22,7 @@
       </v-btn>
       </v-slide-x-transition>
       <EntryViewCard
+        v-if="menu"
         :entry="entry"
         :width="width"
       >
@@ -47,6 +48,7 @@
         <v-icon color="white" class="sharp-shadow">close</v-icon>
       </v-btn>
       <EntryViewCard
+        v-if="menu"
         :entry="entry"
         :width="width"
       >
