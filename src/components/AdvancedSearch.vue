@@ -118,12 +118,12 @@ export default {
             }
             custom.max = this.resolveFilters[h.solrname].max
             custom.min = this.resolveFilters[h.solrname].min
-          } else if (h.title && h.title.startsWith("latitude")) {
+          } else if (h.solrname === 'l1') {
             custom.max = 90
             custom.between = true
             custom.default = [40,50]
 
-          } else if (h.title && h.title.startsWith("longitude")) {
+          } else if (h.solrname === 'l11') {
             custom.max = 180
             custom.between = true
             custom.default = [70,110]

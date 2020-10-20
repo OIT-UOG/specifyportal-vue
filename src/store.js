@@ -172,6 +172,16 @@ export default new Vuex.Store({
     lastPage: null, // fill this
     // abort stuff. not sure if this saves api flops
     abortController: null,
+    fieldTranslations: {
+      'startDate': 'Date',
+      'collection': 'Collection',
+      'collectors': 'Collectors',
+      'determinations': 'Determinations',
+      'catalogNumber': 'Catalog Number',
+      'preparations': 'Preparations',
+      'latitude1': 'Latitude',
+      'longitude1': 'Longitude',
+    }
   },
   mutations: {
     setDrawer(state, open) {
@@ -331,6 +341,9 @@ export default new Vuex.Store({
       let settings = getters.collectionSettings(coll);
       let baseUrl = settings.imageBaseUrl;
       let collName = encodeURIComponent(settings.collectionName);
+      if (!size) {
+        size = -1;
+      }
       return `${baseUrl}/fileget?coll=${collName}&type=T&filename=${filename}&scale=${size}`;
     },
     getImage: (state, getters) => (unique_id) => {
@@ -350,10 +363,15 @@ export default new Vuex.Store({
       API_URL = apiUrl;
       let resp = await fetch(API_URL + "/model");
       let fields = await resp.json();
+      fields.forEach((f) => {
+        if (f.title in context.state.fieldTranslations) {
+          f.title = context.state.fieldTranslations[f.title];
+        }
+      });
 
       let fieldMap = fields.reduce((acc, field) => {
         acc[field.solrname] = field;
-        if (field.title === "determinations") {
+        if (field.solrname === "de") {
           field.advancedsearch = false;
         }
         field.visibleInResults = field.advancedsearch;
