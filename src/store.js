@@ -247,22 +247,27 @@ export default new Vuex.Store({
         collections: state.queryTerms.coll.and ? [] : [...state.queryTerms.coll.list],
       };
 
-      const fs = Object.entries(state.queryTerms).filter(([field, {and, list}]) => {
-        return field !== 'coll' && list.length > 0
-      }).map(([field, {and, list}]) => {
-        return [
-          and ? state.apiSyntax.AND : state.apiSyntax.OR,
-          ...list.map((item) => {
-            return Array.isArray(item) ? [field, ...item] : [field, item]
-          })
-        ]
-      })
-      const queryTerms = [
-        state.apiSyntax.AND,
-        ...state.searchTerms,
-        ...fs,
-      ]
-      params.queryTerms = queryTerms
+      const fs = Object.entries(state.queryTerms)
+        .filter(([field, { and, list }]) => {
+          return field !== "coll" && list.length > 0;
+        })
+        .map(([field, { and, list }]) => {
+          return [
+            and ? state.apiSyntax.AND : state.apiSyntax.OR,
+            ...list.map((item) => {
+              return Array.isArray(item)
+                ? [
+                    field,
+                    ...item.map((i) => {
+                      return typeof i === "string" ? i.toLowerCase() : i;
+                    }),
+                  ]
+                : [field, typeof item === "string" ? item.toLowerCase() : item];
+            }),
+          ];
+        });
+      const queryTerms = [state.apiSyntax.AND, ...state.searchTerms, ...fs];
+      params.queryTerms = queryTerms;
 
       if (state.sort.field !== null) {
         params.sort = state.sort.field;
