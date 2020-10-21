@@ -4,6 +4,11 @@
       :scrollable="false"
       class="pb-4"
     >
+      <FullScreenImageItem
+        v-model="fullScreen"
+        :items="entry.img"
+        :selected.sync="caro_i"
+      />
       <v-carousel
         v-if="showCarousel"
         :hide-actions="mapi==0"
@@ -20,6 +25,12 @@
           :key="img.unique_id"
           :src="imageUrl(img.collection, img.filename, width)"
         >
+          <v-btn absolute fab right flat small :ripple="false" light
+            class="all-the-way-right"
+            @click="fullScreen = true"
+          >
+            <v-icon color="white" class="sharp-shadow">fullscreen</v-icon>
+          </v-btn>
         </v-carousel-item>
         <v-carousel-item
           v-if="showCoords"
@@ -69,9 +80,11 @@
 <script>
 import { mapState, mapGetters, mapActions } from 'vuex'
 // import ImageItem from '@/components/ImageItem'
+import FullScreenImageItem from '@/components/FullScreenImageItem';
 
 export default {
   components: {
+    FullScreenImageItem,
     // ImageItem
   },
   props: {
@@ -109,7 +122,8 @@ export default {
       },
       zooms: [15, 10, 8],
       zoomi: 1,
-      caro_i: 0
+      caro_i: 0,
+      fullScreen: false,
     }
   },
   computed: {
@@ -181,7 +195,7 @@ export default {
       else /* else use Google */
         window.open("https://maps.google.com/maps?" + q);
     }
-  }
+  },
 }
 </script>
 
@@ -194,6 +208,12 @@ export default {
   -webkit-box-shadow: none;
 	-moz-box-shadow: none;
 	box-shadow: none;
+}
+.all-the-way-right {
+  right: 0px;
+}
+.sharp-shadow {
+  text-shadow: 0px 1px 1px #000000;
 }
 .denser  {
   height: 20px;

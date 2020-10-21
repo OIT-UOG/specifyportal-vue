@@ -14,7 +14,7 @@
       </template>
 
       <v-slide-x-transition>
-      <v-btn v-show="showBtn" absolute fab right flat small :ripple="false"
+      <v-btn v-show="showBtn" absolute fab left flat small :ripple="false"
         @click="menu = false"
         class="off-right"
       >
@@ -41,9 +41,9 @@
         <slot :on="on"></slot>
       </template>
 
-      <v-btn absolute fab right flat small :ripple="false"
+      <v-btn absolute fab left flat small :ripple="false"
         @click="menu = false"
-        class="all-the-way-right"
+        class="all-the-way-left"
       >
         <v-icon color="white" class="sharp-shadow">close</v-icon>
       </v-btn>
@@ -110,7 +110,7 @@ export default {
   },
   methods: {
     ...mapActions(['setCardOpen'])
-  }
+  },
 }
 </script>
 
@@ -123,6 +123,9 @@ export default {
 }
 .all-the-way-right {
   right: 0px;
+}
+.all-the-way-left {
+  left: 0px;
 }
 .sharp-shadow {
   text-shadow: 0px 1px 1px #000000;
