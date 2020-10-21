@@ -158,7 +158,7 @@ export default {
   },
 	methods: {
     handleChange(event, filter, i) {
-      if (filter.list.length > 1) {
+      if (filter.list.length > 1 || !filter.isOpen) {
         event.stopPropagation();
       }
       this.removeTerm(filter.colkey, i);
