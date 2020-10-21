@@ -22,7 +22,7 @@
       </v-btn>
       </v-slide-x-transition>
       <EntryViewCard
-        v-if="menu"
+        v-if="everOpened || menu"
         :entry="entry"
         :width="width"
       >
@@ -48,7 +48,7 @@
         <v-icon color="white" class="sharp-shadow">close</v-icon>
       </v-btn>
       <EntryViewCard
-        v-if="menu"
+        v-if="everOpened || menu"
         :entry="entry"
         :width="width"
       >
@@ -87,7 +87,8 @@ export default {
       menu: false,
       width: 400,
       open: true,
-      showBtn: false
+      showBtn: false,
+      everOpened: false,
     }
   },
   computed: {
@@ -99,6 +100,7 @@ export default {
   watch: {
     menu () {
       this.setCardOpen(this.menu)
+      this.everOpened = true
       if (this.menu) {
         setTimeout(() => {
           this.showBtn = true
