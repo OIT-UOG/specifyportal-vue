@@ -1,5 +1,6 @@
 <template>
 	<v-expansion-panel
+    v-model="expanded"
 		expand
 	>
 
@@ -78,6 +79,7 @@ export default {
       resolveFilters: {
 
       },
+      expanded: [],
     }
   },
   computed: {
@@ -147,7 +149,10 @@ export default {
       })
     },
     visibleFilters () {
-      return this.filters.filter(f => f.visible)
+      return this.filters.filter(f => f.visible).map((f, i) => {
+        f.isOpen = this.expanded[i] || false
+        return f;
+      })
     },
     ...mapGetters(['advancedSearchColumns', 'getQueryTerm'])
   },

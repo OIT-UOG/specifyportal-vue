@@ -1,6 +1,7 @@
 <template>
 	<div>
 		<v-text-field
+      ref="field"
 			label=" Search"
 			v-model="stuff"
 			@keydown.enter="submit"
@@ -17,15 +18,23 @@ import { mapActions, mapGetters, mapState } from 'vuex'
 export default {
 	props: {
 		title: String,
-		colkey: String
+    colkey: String,
+    isOpen: Boolean,
 	},
 	data () {
 		return {
-			stuff: ""
+      stuff: "",
 		}
     },
   computed: {
     ...mapGetters(['getQueryTerm']),
+  },
+  watch: {
+    isOpen() {
+      if (this.isOpen) {
+        this.$refs.field.focus();
+      }
+    },
   },
 	methods: {
 		submit(e) {
@@ -38,6 +47,6 @@ export default {
 			this.stuff = ""
 		},
 		...mapActions(['setQueryField'])
-	}
+  },
 }
 </script>
