@@ -76,19 +76,21 @@ class Query {
     const call = await fetch(this.url, { signal });
     const res = await call.json();
     if ("detail" in res) {
-      if ("error" in res.detail && res.detail.error.code === 400) {
+      if (typeof res.detail === "string") {
+        if (res.detail.startsWith("last page is -1, requested page was")) {
+          this.results = [];
+          this.total = 0;
+          this.lastPageNumber = -1;
+          this.facet_counts = [];
+          this.msg = "No data available";
+          return [];
+        }
+      } else if ("error" in res.detail && res.detail.error.code === 400) {
         this.results = [];
         this.total = 0;
         this.lastPageNumber = -1;
         this.facet_counts = [];
         this.msg = "Error in query";
-        return [];
-      } else if (res.detail.startsWith("last page is -1, requested page was")) {
-        this.results = [];
-        this.total = 0;
-        this.lastPageNumber = -1;
-        this.facet_counts = [];
-        this.msg = "No data available";
         return [];
       }
     }
