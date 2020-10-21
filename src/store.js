@@ -173,15 +173,15 @@ export default new Vuex.Store({
     // abort stuff. not sure if this saves api flops
     abortController: null,
     fieldTranslations: {
-      'startDate': 'Date',
-      'collection': 'Collection',
-      'collectors': 'Collectors',
-      'determinations': 'Determinations',
-      'catalogNumber': 'Catalog Number',
-      'preparations': 'Preparations',
-      'latitude1': 'Latitude',
-      'longitude1': 'Longitude',
-    }
+      startDate: "Date",
+      collection: "Collection",
+      collectors: "Collectors",
+      determinations: "Determinations",
+      catalogNumber: "Catalog Number",
+      preparations: "Preparations",
+      latitude1: "Latitude",
+      longitude1: "Longitude",
+    },
   },
   mutations: {
     setDrawer(state, open) {
@@ -202,8 +202,8 @@ export default new Vuex.Store({
     setSettings(state, settings) {
       state.customSettings = settings;
     },
-    setFieldResultVisibility(state, {solrname, visibleInResults}) {
-      state.fields[solrname].visibleInResults = visibleInResults
+    setFieldResultVisibility(state, { solrname, visibleInResults }) {
+      state.fields[solrname].visibleInResults = visibleInResults;
     },
     setQueryLoading(state, loaded) {
       state.queryLoading = loaded;
@@ -243,7 +243,7 @@ export default new Vuex.Store({
     rebuildQuery(state) {
       let params = {
         collections: state.queryTerms.coll.and ? [] : [...state.queryTerms.coll.list],
-      }
+      };
 
       const fs = Object.entries(state.queryTerms).filter(([field, {and, list}]) => {
         return field !== 'coll' && list.length > 0
@@ -263,28 +263,28 @@ export default new Vuex.Store({
       params.queryTerms = queryTerms
 
       if (state.sort.field !== null) {
-        params.sort = state.sort.field
-        params.asc = state.sort.asc
+        params.sort = state.sort.field;
+        params.asc = state.sort.asc;
       }
 
-      state.query = new Query(params)
+      state.query = new Query(params);
       state.queryMessage = null;
       state.queryRan = false;
     },
     setSearchTerms(state, terms) {
-      state.searchTerms = (terms && terms.length !== 0) ? terms : ["*"];
+      state.searchTerms = terms && terms.length !== 0 ? terms : ["*"];
     },
-    setSort(state, {field, asc}) {
+    setSort(state, { field, asc }) {
       state.sort = {
         field: field,
         asc: asc,
-      }
+      };
     },
     removeSort(state) {
       state.sort = {
         field: null,
         asc: false,
-      }
+      };
     },
     // should query mutations reset the query also? or should this be from actions
     setQueryField(state, { field, and, list }) {
@@ -326,7 +326,7 @@ export default new Vuex.Store({
       return state.customSettings[coll];
     },
     getQueryTerm: (state) => (field) => {
-      return JSON.parse(JSON.stringify(state.queryTerms[field]))
+      return JSON.parse(JSON.stringify(state.queryTerms[field]));
     },
     getSpecimenById: (state, getters) => (collection, spid) => {
       return state.entries.find((e) => e.spid === spid);
@@ -386,8 +386,8 @@ export default new Vuex.Store({
           field: field,
           list: [],
           and: false,
-        })
-      })
+        });
+      });
 
       resp = await fetch(API_URL + "/settings");
       let settings = await resp.json();
@@ -404,9 +404,9 @@ export default new Vuex.Store({
       context.commit("setCardOpen", open);
     },
     setSearchTerms(context, searches) {
-      context.commit('setSearchTerms', searches);
-      context.commit('rebuildQuery');
-      return context.dispatch('runNewQuery');
+      context.commit("setSearchTerms", searches);
+      context.commit("rebuildQuery");
+      return context.dispatch("runNewQuery");
     },
     // debounce this for sliders
     // how to do async vs no async versions?
@@ -416,14 +416,14 @@ export default new Vuex.Store({
       return context.dispatch('runNewQuery');
     },
     sort(context, { field, asc = true }) {
-      context.commit('setSort', { field, asc });
-      context.commit('rebuildQuery');
-      return context.dispatch('runNewQuery');
+      context.commit("setSort", { field, asc });
+      context.commit("rebuildQuery");
+      return context.dispatch("runNewQuery");
     },
     unsort(context) {
-      context.commit('removeSort');
-      context.commit('rebuildQuery');
-      return context.dispatch('runNewQuery');
+      context.commit("removeSort");
+      context.commit("rebuildQuery");
+      return context.dispatch("runNewQuery");
     },
     async _doQuery(context) {
       context.commit("setQueryLoading", true);
@@ -435,9 +435,9 @@ export default new Vuex.Store({
       context.commit("setAbortController", controller);
       let docs;
       try {
-        docs = await context.state.query.quickFetch(signal);[0]
+        docs = await context.state.query.quickFetch(signal);
       } catch (error) {
-        if (error.name === 'AbortError') {
+        if (error.name === "AbortError") {
           return false;
         }
         throw error;
@@ -478,7 +478,7 @@ export default new Vuex.Store({
         width: payload.width,
       });
     },
-    async getEdgeValue(context, {field, min}) {
+    async getEdgeValue(context, { field, min }) {
       const q = new Query({
         collections: [],
         queryTerms: [field, "*"],
