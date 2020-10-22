@@ -175,7 +175,7 @@ export default new Vuex.Store({
     // abort stuff. not sure if this saves api flops
     abortController: null,
     fieldTranslations: {
-      startDate: "Date",
+      startDate: "Collection Date",
       collection: "Collection",
       collectors: "Collectors",
       determinations: "Determinations",
