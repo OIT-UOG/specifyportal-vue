@@ -36,6 +36,7 @@
 				@input="submit(false)"
 				track-color="failure"
 				thumb-label="always"
+        :thumb-color="isDuplicateAndNotLastItem ? 'grey' : null"
 				:thumb-size="ts"
 			></v-slider>
 		</v-flex>
@@ -51,6 +52,7 @@
 			<v-btn class="xs6" color="primary"
 				small
 				outline
+        :disabled="isDuplicateAndNotLastItem"
 				@click="submit(true)"
 			>add</v-btn>
 		</v-flex>
@@ -86,7 +88,8 @@ export default {
 			stuff: 0,
 			stuffs: [0,100],
 			m_between: false,
-      ts: 30
+      ts: 30,
+      isNew: true,
 		}
   },
   computed: {
@@ -127,29 +130,79 @@ export default {
 			return Math.round(noff + prevbp[1])
 		})
   },
-
-	...mapGetters(['collections', 'getQueryTerm'])
+  isDuplicate() {
+    let item = this.stuff;
+    if (this.m_between) {
+      item = this.stuffs;
+    }
+    return this._inFieldList({ field: this.colkey, item });
+  },
+  isDuplicateAndNotLastItem() {
+    return this.isDuplicate && !this.sameAsLastItem
+  },
+  sameAsLastItem() {
+    let list = this.getQueryTerm(this.colkey).list;
+    if (list.length === 0) {
+      return false;
+    }
+    let lastItem = list[list.length-1];
+    if (this.m_between) {
+      return JSON.stringify(lastItem).toLowerCase() === JSON.stringify(this.item).toLowerCase()
+    }
+    return lastItem === this.item
+  },
+  item() {
+    if (this.m_between) {
+      return [...this.stuffs]
+    }
+    return this.stuff;
+  },
+	...mapGetters(['collections', 'getQueryTerm', '_inFieldList'])
   },
 	methods: {
 		submit: _.debounce(async function(add) {
-			let search = this.stuff
-			let to = undefined
-      let newTerm = search
-			if (this.m_between) {
-        [ search, to ] = this.between_vals
-        newTerm = [search, to]
+      if (add) {
+        this.isNew = true
       }
+
+			let newTerm = this.item
 
       let qt = this.getQueryTerm(this.colkey);
       let list = qt.list;
+      let lastItem = list.length > 0 ? list[list.length-1] : null;
+      if (Array.isArray(newTerm)) {
+        if (JSON.stringify(lastItem).toLowerCase() === JSON.stringify(newTerm).toLowerCase()) {
+          return
+        }
+      } else {
+        if (newTerm === lastItem) {
+          return
+        }
+      }
+      if (this.isDuplicate) {
+        if (add) this.isNew = false
+        return
+      }
+      console.log('no dupe')
       if (list.length > 0) {
-        list[list.length-1] = newTerm;
+        if (this.isNew) {
+          console.log(`is new. pushing ${newTerm} > [${list}]`)
+          list.push(newTerm)
+        } else {
+          console.log(`not new. changing ${newTerm} > [${list}]`)
+          list[list.length-1] = newTerm;
+        }
       } else {
         list = [newTerm];
       }
 
-      if (add) {
+      if (add && !this.isNew) {
+        console.log(`not new and submitting. pushing. will be new ${newTerm} > [${list}]`)
         list.push(newTerm);
+        this.isNew = true;
+      } else {
+        console.log('no longer new')
+        this.isNew = false;
       }
 
 			this.setQueryField({ field: this.colkey, and: qt.and, list })

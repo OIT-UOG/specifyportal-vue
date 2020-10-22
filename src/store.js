@@ -364,6 +364,35 @@ export default new Vuex.Store({
     getImageWidth: (state, getters) => (unique_id) => {
       return getters.getImage(unique_id).width;
     },
+    // really, I should be checking toLowerCase for everything but
+    // probably not worth it to check if string and toLowerCase each item
+    _inFieldList: (state, getters) => ({ field, item, list = null }) => {
+      let arr = list;
+      if (list === null) {
+        arr = getters.getQueryTerm(field).list;
+      }
+      if (Array.isArray(item)) {
+        return JSON.stringify(arr).toLowerCase().indexOf(JSON.stringify(item).toLowerCase()) >= 0;
+      }
+      return arr.indexOf(item) >= 0;
+    },
+    _dedupeFieldList: (state) => (list) => {
+      let dedupe = [];
+      list.forEach((item) => {
+        if (Array.isArray(item)) {
+          const arrs = JSON.stringify(dedupe).toLowerCase();
+          const its = JSON.stringify(item).toLowerCase();
+          if (arrs.indexOf(its) === -1) {
+            dedupe.push(item);
+          }
+        } else {
+          if (!dedupe.includes(item)) {
+            dedupe.push(item);
+          }
+        }
+      });
+      return dedupe;
+    },
   },
   actions: {
     async loadSettings(context, apiUrl) {
@@ -418,9 +447,10 @@ export default new Vuex.Store({
     // debounce this for sliders
     // how to do async vs no async versions?
     setQueryField(context, { field, and, list }) {
-      context.commit('setQueryField', { field, and, list });
-      context.commit('rebuildQuery');
-      return context.dispatch('runNewQuery');
+      let dedupe = context.getters._dedupeFieldList(list);
+      context.commit("setQueryField", { field, and, list: dedupe });
+      context.commit("rebuildQuery");
+      return context.dispatch("runNewQuery");
     },
     sort(context, { field, asc = true }) {
       context.commit("setSort", { field, asc });
