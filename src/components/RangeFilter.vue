@@ -24,6 +24,7 @@
 				:max="max"
 				@input="submit(false)"
 				style="margin-top: 4px"
+        :color="isDuplicateAndNotLastItem ? 'grey' : null"
 			></v-range-slider>
 				<!-- thumb-label="always"
 				:thumb-size="ts" -->
