@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 import { normalize } from 'path';
+import colors from 'vuetify/lib/util/colors'
 
 Vue.use(Vuex)
 
@@ -144,6 +145,19 @@ function isEmpty(obj) {
 
 let API_URL;
 
+const POLY_COLORS = [
+  colors.blue.base,
+  colors.yellow.lighten3,
+  colors.purple.lighten3,
+  colors.shades.white,
+  colors.red.lighten1,
+  colors.cyan.lighten1,
+  colors.grey.base,
+  colors.orange.darken2,
+  colors.green.darken2
+]
+
+const GUAM = { lat: 13.477342, lng: 144.791369 };
 
 export default new Vuex.Store({
   state: {
@@ -170,6 +184,9 @@ export default new Vuex.Store({
     entries: [],
     query: null,
     geoFacets: [],
+    geoFacetsFiltered: [],
+    filterPolys: {},
+    filterPolyIdCounter: 0,
     total: null, // fill this
     lastPage: null, // fill this
     // abort stuff. not sure if this saves api flops
@@ -184,6 +201,14 @@ export default new Vuex.Store({
       latitude1: "Latitude",
       longitude1: "Longitude",
     },
+
+    // additional map stuff
+    google: null,
+    googleSet: false,
+    mapZoom: 11,
+    mapCenter: GUAM,
+    mapBounds: null,
+    filterPolyHighlighted: null,
   },
   mutations: {
     setDrawer(state, open) {
@@ -233,6 +258,41 @@ export default new Vuex.Store({
     },
     setGeoFacets(state, facets) {
       state.geoFacets = facets;
+      state.geoFacetsFiltered = facets.map(f => true)
+    },
+    setGeoFacetsFilter(state, inOutFilterList) {
+      state.geoFacetsFiltered = inOutFilterList
+    },
+    setFilterPolyPath(state, { poly, path }) {
+      Vue.set(state.filterPolys[poly.id], 'path', path);
+    },
+    setFilterPolySelected(state, { poly, selected }) {
+      Vue.set(state.filterPolys[poly.id], 'selected', selected);
+    },
+    deleteFilterPoly(state, poly) {
+      Vue.delete(state.filterPolys, poly.id)
+    },
+    addFilterPoly(state, poly) {
+      Vue.set(state.filterPolys, poly.id, poly);
+    },
+    setFilterPolyHighlighted(state, poly) {
+      state.filterPolyHighlighted = poly
+    },
+    incrementFilterPolyCounter(state) {
+      state.filterPolyIdCounter += 1;
+    },
+    setGoogle(state, googleApi) {
+      state.google = googleApi
+      state.googleSet = true
+    },
+    setMapZoom(state, zoom) {
+      state.mapZoom = zoom
+    },
+    setMapCenter(state, center) {
+      state.mapCenter = center
+    },
+    setMapBounds(state, bounds) {
+      state.mapBounds = bounds
     },
     _setImgSize(state, payload) {
       let img = payload.getters.getImage(payload.unique_id);
@@ -338,6 +398,26 @@ export default new Vuex.Store({
     getSpecimenById: (state, getters) => (collection, spid) => {
       return state.entries.find((e) => e.spid === spid);
     },
+    visibleGeoFacets(state) {
+      return state.geoFacets.filter((f, i) => state.geoFacetsFiltered[i])
+    },
+    invisibleGeoFacets(state) {
+      return state.geoFacets.filter((f, i) => !state.geoFacetsFiltered[i])
+    },
+    geoGacetsWithMeta(state) {
+      return state.geoFacets.map((f, i) => {
+        return {
+          facet: f,
+          visible: state.geoFacetsFiltered[i]
+        }
+      })
+    },
+    filterPolyList(state) {
+      return Object.values(state.filterPolys);
+    },
+    filterPolyIsHighlighted: (state) => (poly) => {
+      return state.filterPolyHighlighted === poly;
+    },
     images(state) {
       return state.entries.reduce((acc, entry) => {
         acc.push(...entry.img);
@@ -439,6 +519,19 @@ export default new Vuex.Store({
     setCardOpen(context, open) {
       context.commit("setCardOpen", open);
     },
+    setGoogle(context, googleApi) {
+      context.commit("setGoogle", googleApi);
+      context.dispatch('updateGeoFacetsFilter');
+    },
+    setMapZoom(context, zoom) {
+      context.commit('setMapZoom', zoom);
+    },
+    setMapCenter(context, center) {
+      context.commit('setMapCenter', center);
+    },
+    setMapBounds(context, bounds) {
+      context.commit('setMapBounds', bounds)
+    },
     setSearchTerms(context, searches) {
       context.commit("setSearchTerms", searches);
       context.commit("rebuildQuery");
@@ -452,6 +545,68 @@ export default new Vuex.Store({
       context.commit("rebuildQuery");
       return context.dispatch("runNewQuery");
     },
+    setGeoFacetsFilter(context, inOutFilterList) {
+      context.commit("setGeoFacetsFilter", inOutFilterList);
+    },
+    createFilterPoly(context, { tl, size=0.5, selected=true }) {
+      let span = context.state.mapBounds.toSpan();
+      let minSize = Math.min(span.lat(), span.lng()) * size;
+      let growth = [[0,0], [0,1], [-1,1], [-1,0]];
+      let path = growth.map(([dx, dy]) => {
+        return {
+          lat: tl.lat + dx * minSize,
+          lng: tl.lng + dy * minSize
+        }
+      });
+
+      context.commit('addFilterPoly', {
+        path,
+        id: context.state.filterPolyIdCounter,
+        color: POLY_COLORS[context.state.filterPolyIdCounter % POLY_COLORS.length],
+        selected
+      })
+      context.commit('incrementFilterPolyCounter');
+      context.dispatch('updateGeoFacetsFilter');
+    },
+    deleteFilterPoly(context, poly) {
+      context.commit('deleteFilterPoly', poly);
+      context.dispatch('updateGeoFacetsFilter');
+    },
+    setFilterPolyPath(context, { poly, path }) {
+      context.commit('setFilterPolyPath', { poly, path });
+      context.dispatch('updateGeoFacetsFilter');
+    },
+    setFilterPolySelected(context, { poly, selected }) {
+      context.commit('setFilterPolySelected', { poly, selected });
+      context.dispatch('updateGeoFacetsFilter');
+    },
+    setFilterPolyHighlighted(context, poly) {
+      context.commit('setFilterPolyHighlighted', poly);
+    },
+    updateGeoFacetsFilter: _.debounce((context) => {
+      if (context.state.google === null || context.getters.filterPolyList.filter(p => p.selected).length === 0) {
+        context.dispatch('setGeoFacetsFilter', context.state.geoFacets.map(f => true))
+        return
+      }
+
+      let visibleCoords = context.state.geoFacets.map(f => false);
+      let bucket = context.state.geoFacets.map((f, i) => [f, i])
+
+      context.getters.filterPolyList.filter(p => p.selected).forEach(p => {
+        bucket = bucket.filter(([c, i]) => {
+          const contains = context.state.google.maps.geometry.poly.containsLocation(
+            new context.state.google.maps.LatLng(c.position.lat, c.position.lng),
+            new context.state.google.maps.Polygon({ paths: p.path })
+          )
+          if (contains) {
+            visibleCoords[i] = true
+          }
+          return !contains
+        })
+        // context.state.google.maps.Polygon.prototype.containsLatLng()
+      });
+      context.dispatch('setGeoFacetsFilter', visibleCoords)
+    }, 200),
     sort(context, { field, asc = true }) {
       context.commit("setSort", { field, asc });
       context.commit("rebuildQuery");
@@ -495,6 +650,7 @@ export default new Vuex.Store({
       context.commit("setTotal", query.total);
       context.commit("setLastPage", query.lastPageNumber);
       context.commit("setQueryMessage", query.msg);
+      context.dispatch('updateGeoFacetsFilter');
     },
     async more(context) {
       let query = context.state.query;
