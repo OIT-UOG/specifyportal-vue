@@ -22,10 +22,13 @@
           @idle="updateMapCenter(centeringOn)"
         >
           <GmapMarker
-            v-for="(marker, i) in invisibleGeoFacets"
+            v-for="(marker, i) in globalGeoFacetsNotVisibleGeoFacets"
             :position="marker.position"
             :options="{
-              icon: DOT_IMG
+              icon: {
+                url: DOT_IMG,
+                anchor: {x: 9.5, y: 10},
+              }
             }"
             @click="toggleInfo(marker,'in' + i,$event)"
           ></GmapMarker>
@@ -83,7 +86,7 @@
             @closeclick="polyOpen=false"
           >
             <v-btn class="ma-0" icon tile large @click="newPoly(polyPosition, zoom)">
-              <v-icon>crop</v-icon>
+              <v-icon>crop</v-icon>+
             </v-btn>
           </GmapInfoWindow>
           <GmapInfoWindow
@@ -162,8 +165,15 @@ export default {
         return this.google;
       }
     },
-    ...mapGetters(['visibleGeoFacets', 'invisibleGeoFacets', 'filterPolyList', 'filterPolyIsHighlighted']),
-    ...mapState(['geoFacets', 'google']),
+    ...mapGetters([
+      'visibleGeoFacets',
+      'invisibleGeoFacets',
+      'globalGeoFacetsNotVisibleGeoFacets',
+      'invisibleGlobalGeoFacets',
+      'filterPolyList',
+      'filterPolyIsHighlighted'
+    ]),
+    ...mapState(['geoFacets', 'google', 'globalGeoFacets']),
     ...mapState({
       zoom: 'mapZoom',
       center: 'mapCenter',
@@ -271,7 +281,6 @@ export default {
     ...mapActions([
         'runNewQuery',
         'setQueryField',
-        'setGeoFacetsFilter',
         'setGoogle',
         'createFilterPoly',
         'deleteFilterPoly',

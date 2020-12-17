@@ -145,16 +145,16 @@ function isEmpty(obj) {
 
 let API_URL;
 
+// [color, dark]
 const POLY_COLORS = [
-  colors.blue.base,
-  colors.yellow.lighten3,
-  colors.purple.lighten3,
-  colors.shades.white,
-  colors.red.lighten1,
-  colors.cyan.lighten1,
-  colors.grey.base,
-  colors.orange.darken2,
-  colors.green.darken2
+  [colors.blue.base, true],
+  [colors.yellow.darken1, false],
+  [colors.purple.lighten3, false],
+  [colors.red.lighten1, true],
+  [colors.cyan.lighten1, true],
+  [colors.grey.base, true],
+  [colors.orange.darken2, true],
+  [colors.green.darken2, true],
 ]
 
 const GUAM = { lat: 13.477342, lng: 144.791369 };
@@ -169,6 +169,7 @@ export default new Vuex.Store({
     loaded: false,
     query: null,
     queryTerms: {},
+    manualQueryTerms: [],
     queryLoading: false,
     queryRan: false,
     queryMessage: null,
@@ -185,6 +186,7 @@ export default new Vuex.Store({
     query: null,
     geoFacets: [],
     geoFacetsFiltered: [],
+    globalGeoFacets: [],
     filterPolys: {},
     filterPolyIdCounter: 0,
     total: null, // fill this
@@ -258,10 +260,12 @@ export default new Vuex.Store({
     },
     setGeoFacets(state, facets) {
       state.geoFacets = facets;
-      state.geoFacetsFiltered = facets.map(f => true)
     },
     setGeoFacetsFilter(state, inOutFilterList) {
       state.geoFacetsFiltered = inOutFilterList
+    },
+    setGlobalGeoFacets(state, geoFacets) {
+      state.globalGeoFacets = geoFacets;
     },
     setFilterPolyPath(state, { poly, path }) {
       Vue.set(state.filterPolys[poly.id], 'path', path);
@@ -326,7 +330,7 @@ export default new Vuex.Store({
             }),
           ];
         });
-      const queryTerms = [state.apiSyntax.AND, ...state.searchTerms, ...fs];
+      const queryTerms = [state.apiSyntax.AND, ...state.searchTerms, ...fs, ...state.manualQueryTerms];
       params.queryTerms = queryTerms;
 
       if (state.sort.field !== null) {
@@ -365,6 +369,9 @@ export default new Vuex.Store({
     toggleQueryFieldOp(state, field) {
       state.queryTerms[field].and = !state.queryTerms[field].and;
     },
+    setManualQueryField(state, manualQueryTerms) {
+      state.manualQueryTerms = manualQueryTerms
+    },
   },
   getters: {
     collections(state) {
@@ -398,18 +405,53 @@ export default new Vuex.Store({
     getSpecimenById: (state, getters) => (collection, spid) => {
       return state.entries.find((e) => e.spid === spid);
     },
-    visibleGeoFacets(state) {
-      return state.geoFacets.filter((f, i) => state.geoFacetsFiltered[i])
+    globalGeoFacetsPosByLat(state) {
+      return state.globalGeoFacets.reduce((prev, curr) => {
+        prev[curr.position.lat] = curr.position.lng
+        return prev;
+      }, {})
     },
-    invisibleGeoFacets(state) {
-      return state.geoFacets.filter((f, i) => !state.geoFacetsFiltered[i])
+    visibleGlobalGeoFacets(state) {
+      return state.globalGeoFacets.filter((f, i) => state.geoFacetsFiltered[i])
     },
-    geoGacetsWithMeta(state) {
-      return state.geoFacets.map((f, i) => {
-        return {
-          facet: f,
-          visible: state.geoFacetsFiltered[i]
+    invisibleGlobalGeoFacets(state) {
+      return state.globalGeoFacets.filter((f, i) => !state.geoFacetsFiltered[i])
+    },
+    visibleGlobalGeoFacetsPosByLat(state, getters) {
+      return getters.visibleGlobalGeoFacets.reduce((prev, curr) => {
+        if (curr.position.lat in prev) {
+          prev[curr.position.lat][curr.position.lng] = true
+        } else {
+          prev[curr.position.lat] = {[curr.position.lng]: true}
         }
+        return prev;
+      }, {})
+    },
+    visibleGeoFacetsPosByLat(state, getters) {
+      return getters.visibleGeoFacets.reduce((prev, curr) => {
+        if (curr.position.lat in prev) {
+          prev[curr.position.lat][curr.position.lng] = true;
+        } else {
+          prev[curr.position.lat] = {[curr.position.lng]: true}
+        }
+        return prev;
+      }, {})
+    },
+    visibleGeoFacets(state, getters) {
+      let map = getters.visibleGlobalGeoFacetsPosByLat
+      return state.geoFacets.filter(f => map[f.position.lat] && map[f.position.lat][f.position.lng])
+    },
+    invisibleGeoFacets(state, getters) {
+      let map = getters.visibleGlobalGeoFacetsPosByLat
+      return state.geoFacets.filter(f => !map[f.position.lat] || !map[f.position.lat][f.position.lng])
+    },
+    globalGeoFacetsNotVisibleGeoFacets(state, getters) {
+      let map = getters.visibleGeoFacetsPosByLat
+      return state.globalGeoFacets.filter(f => {
+        if (!map[f.position.lat]) {
+          return true
+        }
+        return !map[f.position.lat][f.position.lng]
       })
     },
     filterPolyList(state) {
@@ -417,6 +459,17 @@ export default new Vuex.Store({
     },
     filterPolyIsHighlighted: (state) => (poly) => {
       return state.filterPolyHighlighted === poly;
+    },
+    geoFacetsFilterEqual: (state) => (other) => {
+      if (state.geoFacetsFiltered.length !== other.length) {
+        return false;
+      }
+      for (let i=0; i<other.length; i++) {
+        if (state.geoFacetsFiltered[i] !== other[i]) {
+          return false;
+        }
+      }
+      return true;
     },
     images(state) {
       return state.entries.reduce((acc, entry) => {
@@ -511,6 +564,10 @@ export default new Vuex.Store({
       context.commit("setSettings", settings.collections);
       context.commit("setSyntax", settings.search_syntax);
 
+      context.commit("rebuildQuery");
+      await context.dispatch("runNewQuery");
+      context.commit('setGlobalGeoFacets', JSON.parse(JSON.stringify(context.state.geoFacets)));
+      context.commit('setGeoFacetsFilter', context.state.geoFacets.map(f => true))
       context.commit("setLoadingState", true);
     },
     setDrawer(context, open) {
@@ -539,19 +596,29 @@ export default new Vuex.Store({
     },
     // debounce this for sliders
     // how to do async vs no async versions?
-    setQueryField(context, { field, and, list }) {
+    setQueryField(context, { field, and, list, rebuild=true }) {
       let dedupe = context.getters._dedupeFieldList(list);
       context.commit("setQueryField", { field, and, list: dedupe });
+      if (rebuild) {
+        context.commit("rebuildQuery");
+        return context.dispatch("runNewQuery");
+      }
+    },
+    async setManualQueryField(context, manualQueryTerms) {
+      context.commit("setManualQueryField", manualQueryTerms);
       context.commit("rebuildQuery");
-      return context.dispatch("runNewQuery");
+      return await context.dispatch("runNewQuery");
     },
     setGeoFacetsFilter(context, inOutFilterList) {
       context.commit("setGeoFacetsFilter", inOutFilterList);
     },
-    createFilterPoly(context, { tl, size=0.5, selected=true }) {
+    createFilterPoly(context, { tl, size=0.5, selected=true, centered=false }) {
       let span = context.state.mapBounds.toSpan();
       let minSize = Math.min(span.lat(), span.lng()) * size;
       let growth = [[0,0], [0,1], [-1,1], [-1,0]];
+      if (centered) {
+        growth = [[0.5,-0.5], [0.5,0.5], [-0.5,0.5], [-0.5,-0.5]];
+      }
       let path = growth.map(([dx, dy]) => {
         return {
           lat: tl.lat + dx * minSize,
@@ -559,10 +626,12 @@ export default new Vuex.Store({
         }
       });
 
+      let [ color, dark ] = POLY_COLORS[context.state.filterPolyIdCounter % POLY_COLORS.length];
       context.commit('addFilterPoly', {
         path,
         id: context.state.filterPolyIdCounter,
-        color: POLY_COLORS[context.state.filterPolyIdCounter % POLY_COLORS.length],
+        color,
+        dark,
         selected
       })
       context.commit('incrementFilterPolyCounter');
@@ -583,29 +652,89 @@ export default new Vuex.Store({
     setFilterPolyHighlighted(context, poly) {
       context.commit('setFilterPolyHighlighted', poly);
     },
-    updateGeoFacetsFilter: _.debounce((context) => {
+    updateGeoFacetsFilter: _.debounce(async function(context) {
+      // returns whether or not another query was done
       if (context.state.google === null || context.getters.filterPolyList.filter(p => p.selected).length === 0) {
-        context.dispatch('setGeoFacetsFilter', context.state.geoFacets.map(f => true))
-        return
+        // assume only come in pairs
+        if (context.state.manualQueryTerms.length !== 0) {
+          context.commit('setGeoFacetsFilter', context.state.globalGeoFacets.map(f => true))
+          await context.dispatch('setManualQueryField', []);
+          return true
+          // context.dispatch('setQueryField', {
+          //   field: 'l1',
+          //   and: false,
+          //   list: [],
+          //   rebuild: false,
+          // })
+          // context.dispatch('setQueryField', {
+          //   field: 'l11',
+          //   and: false,
+          //   list: [],
+          // })
+        }
+        return false
       }
 
-      let visibleCoords = context.state.geoFacets.map(f => false);
-      let bucket = context.state.geoFacets.map((f, i) => [f, i])
+      let visibleCoords = context.state.globalGeoFacets.map(f => false);
+      let bucket = context.state.globalGeoFacets.map((f, i) => [f, i])
 
-      context.getters.filterPolyList.filter(p => p.selected).forEach(p => {
+      let selectedPolys = context.getters.filterPolyList.filter(p => p.selected)
+      selectedPolys.forEach(p => {
+        let gpoly = new context.state.google.maps.Polygon({ paths: p.path })
         bucket = bucket.filter(([c, i]) => {
           const contains = context.state.google.maps.geometry.poly.containsLocation(
             new context.state.google.maps.LatLng(c.position.lat, c.position.lng),
-            new context.state.google.maps.Polygon({ paths: p.path })
+            gpoly
           )
           if (contains) {
             visibleCoords[i] = true
           }
           return !contains
         })
-        // context.state.google.maps.Polygon.prototype.containsLatLng()
       });
-      context.dispatch('setGeoFacetsFilter', visibleCoords)
+      if (!context.getters.geoFacetsFilterEqual(visibleCoords)) {
+        context.commit('setGeoFacetsFilter', visibleCoords)
+        let visible = context.getters.visibleGlobalGeoFacets
+        // tried to just filter by marker, but url got too long
+        // let latList = visible.map(cd => cd.position.lat)
+        // let lngList = []
+        // if (latList.length <= 55) {
+        //   let lngList = visible.map(cd => cd.position.lng)
+        //   context.dispatch('setQueryField', {
+        //     field: 'l1',
+        //     and: false,
+        //     list: latList,
+        //     rebuild: false,
+        //   })
+        //   context.dispatch('setQueryField', {
+        //     field: 'l11',
+        //     and: false,
+        //     list: lngList,
+        //   })
+        // } else {
+        // latList = []
+        let manual = [context.state.apiSyntax.OR]
+        selectedPolys.forEach(p => {
+          let latBounds = [p.path[0].lat, p.path[0].lat]
+          let lngBounds = [p.path[0].lng, p.path[0].lng]
+          p.path.forEach(({lat, lng}) => {
+            if (lat < latBounds[0]) {
+              latBounds[0] = lat
+            } else if (lat > latBounds[1]) {
+              latBounds[1] = lat
+            }
+            if (lng < lngBounds[0]) {
+              lngBounds[0] = lng
+            } else if (lng > lngBounds[1]) {
+              lngBounds[1] = lng
+            }
+          })
+          manual.push([context.state.apiSyntax.AND, ['l1', ...latBounds], ['l11', ...lngBounds]]);
+        })
+        await context.dispatch('setManualQueryField', [manual]);
+        return true
+      }
+      return false
     }, 200),
     sort(context, { field, asc = true }) {
       context.commit("setSort", { field, asc });
@@ -645,12 +774,24 @@ export default new Vuex.Store({
 
       await context.dispatch("_doQuery");
 
-      context.commit("setEntries", [...query.results]);
       context.commit("setGeoFacets", query.facet_counts);
-      context.commit("setTotal", query.total);
-      context.commit("setLastPage", query.lastPageNumber);
       context.commit("setQueryMessage", query.msg);
-      context.dispatch('updateGeoFacetsFilter');
+      context.commit("setLastPage", query.lastPageNumber);
+      // ensure map filtering is used before editing entries otherwise non-location entries won't show
+      let total = query.total;
+      let entries = [...query.results];
+      if (context.state.manualQueryTerms.length > 0) {
+        let geoByLat = context.getters.visibleGeoFacetsPosByLat
+        entries = entries.filter(e => {
+          if (e.l1 in geoByLat) {
+            return e.l11 in geoByLat[e.l1]
+          }
+          return false
+        })
+        total = context.getters.visibleGeoFacets.reduce((prev, curr) => { return prev + curr.amount }, 0)
+      }
+      context.commit("setTotal", total);
+      context.commit("setEntries", entries);
     },
     async more(context) {
       let query = context.state.query;
