@@ -295,7 +295,6 @@ export default {
   async mounted () {
     this.centeringOn = this.center;
     this.setGoogle(this.googleRaw);
-    await this.runNewQuery()
   },
 }
 </script>
