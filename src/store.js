@@ -13,7 +13,7 @@ const cache = {
 }
 
 class Image {
-  constructor(collection, spid, id, location, title) {
+  constructor(collection, spid, id, location, title, specimen) {
     this.id = id
     this.location = location
     this.title = title
@@ -24,6 +24,7 @@ class Image {
     this.unique_id = `${collection}_${id}`
     this.sizeRatio = null
     this.width = null
+    this.specimen = specimen
   }
 }
 
@@ -99,7 +100,7 @@ class Query {
     res.docs = res.docs.map((sp) => {
       if (sp.img) {
         sp.img = sp.img.map((img) => {
-          return new Image(img.coll, sp.spid, img.id, img.name, img.title);
+          return new Image(img.coll, sp.spid, img.id, img.name, img.title, sp);
         });
       }
       return sp;
