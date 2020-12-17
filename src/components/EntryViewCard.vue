@@ -141,7 +141,7 @@ export default {
     caro_i: {
       get() {
         if (!this.carousel_set) {
-          this.caro_i_raw = this.entry.img.indexOf(this.selectedImg)
+          this.caro_i_raw = Math.max(this.entry.img.indexOf(this.selectedImg), 0)
         }
         this.carousel_set = true
         return this.caro_i_raw
