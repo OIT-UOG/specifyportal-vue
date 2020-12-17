@@ -71,6 +71,10 @@ class Query {
     return this.lastPageNumber === null || this.page <= this.lastPageNumber;
   }
 
+  updatePage(page) {
+    this.page = page
+  }
+
   async quickFetch(signal) {[0]
     if (this.lastPageNumber !== null && this.page > this.lastPageNumber) {
       return false;
@@ -402,6 +406,18 @@ export default new Vuex.Store({
     },
     getQueryTerm: (state) => (field) => {
       return JSON.parse(JSON.stringify(state.queryTerms[field]));
+    },
+    _mapFilterEntries: (state, getters) => (entries) => {
+      if (state.manualQueryTerms.length > 0) {
+        let geoByLat = getters.visibleGeoFacetsPosByLat
+        entries = entries.filter(e => {
+          if (e.l1 in geoByLat) {
+            return e.l11 in geoByLat[e.l1]
+          }
+          return false
+        })
+      }
+      return entries
     },
     getSpecimenById: (state, getters) => (collection, spid) => {
       return state.entries.find((e) => e.spid === spid);
@@ -782,13 +798,7 @@ export default new Vuex.Store({
       let total = query.total;
       let entries = [...query.results];
       if (context.state.manualQueryTerms.length > 0) {
-        let geoByLat = context.getters.visibleGeoFacetsPosByLat
-        entries = entries.filter(e => {
-          if (e.l1 in geoByLat) {
-            return e.l11 in geoByLat[e.l1]
-          }
-          return false
-        })
+        entries = context.getters._mapFilterEntries(entries)
         total = context.getters.visibleGeoFacets.reduce((prev, curr) => { return prev + curr.amount }, 0)
       }
       context.commit("setTotal", total);
@@ -801,7 +811,12 @@ export default new Vuex.Store({
       }
       let res = await context.dispatch("_doQuery");
       if (res) {
+        res = context.getters._mapFilterEntries(res)
         context.commit("addEntries", res);
+      }
+      if (context.state.entries.length >= context.state.total && context.state.query.hasMorePages) {
+        context.state.query.updatePage(context.state.query.lastPageNumber + 1)
+        return false
       }
       return true;
     },
