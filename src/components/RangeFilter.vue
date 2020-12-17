@@ -184,13 +184,10 @@ export default {
         if (add) this.isNew = false
         return
       }
-      console.log('no dupe')
       if (list.length > 0) {
         if (this.isNew) {
-          console.log(`is new. pushing ${newTerm} > [${list}]`)
           list.push(newTerm)
         } else {
-          console.log(`not new. changing ${newTerm} > [${list}]`)
           list[list.length-1] = newTerm;
         }
       } else {
@@ -198,11 +195,9 @@ export default {
       }
 
       if (add && !this.isNew) {
-        console.log(`not new and submitting. pushing. will be new ${newTerm} > [${list}]`)
         list.push(newTerm);
         this.isNew = true;
       } else {
-        console.log('no longer new')
         this.isNew = false;
       }
 

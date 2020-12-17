@@ -203,7 +203,6 @@ export default {
       }
       if (this.$refs.form.validate()) {
         this.submitting = true
-        console.log(this.formUrl)
         let bi = this.browserInfo
         let resp = await fetch(this.formUrl, {
           method: 'POST',
