@@ -25,6 +25,7 @@
         v-if="everOpened || menu"
         :entry="entry"
         :width="width"
+        :selectedImg="img"
       >
       </EntryViewCard>
     </v-dialog>
@@ -51,6 +52,7 @@
         v-if="everOpened || menu"
         :entry="entry"
         :width="width"
+        :selectedImg="img"
       >
       </EntryViewCard>
     </v-menu>
@@ -72,7 +74,12 @@ export default {
     entry: {
       type: Object,
       required: true
-    }
+    },
+    selectedImg: {
+      type: Object,
+      required: false,
+      default: null
+    },
     // collection: {
     //   type: String,
     //   required: true
@@ -89,6 +96,7 @@ export default {
       open: true,
       showBtn: false,
       everOpened: false,
+      img: null,
     }
   },
   computed: {
@@ -102,6 +110,8 @@ export default {
       this.setCardOpen(this.menu)
       this.everOpened = true
       if (this.menu) {
+        this.img = this.selectedImg;
+
         setTimeout(() => {
           this.showBtn = true
         }, 300);

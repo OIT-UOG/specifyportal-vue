@@ -11,12 +11,12 @@
   >
 
     <v-card v-if="everOpened || opened">
-      <v-img 
-        v-if="items.length === 1" 
+      <v-img
+        v-if="items.length === 1"
         :src="image(items[0]).src"
-        height="100%" 
+        height="100%"
         max-width="100%"
-        contain 
+        contain
         class="grey lighten-5"
         style="height: 100vh"
       >
@@ -35,7 +35,7 @@
         </template>
       </v-img>
 
-      <v-carousel class="full-screen-carousel" hide-delimiters height="100%" 
+      <v-carousel class="full-screen-carousel" hide-delimiters height="100%"
         :cycle="false"
         v-model="selectedImg"
       >
@@ -44,11 +44,11 @@
           :key="uniqueImgId(i)"
           light
         >
-          <v-img 
+          <v-img
             :src="image(i).src"
-            height="100%" 
+            height="100%"
             max-width="100%"
-            contain 
+            contain
             class="grey lighten-5"
             style="height: 100vh"
           >
@@ -145,7 +145,6 @@ export default {
   },
   watch: {
     opened() {
-      console.log(this.items)
       this.items.forEach(i => {
         this.image(i)
       });
@@ -170,7 +169,7 @@ export default {
       },
       set(val) {
         this.$emit('update:selected', val);
-      } 
+      }
     },
     style () {
       let style = `background-image: url(${this.loadedSource}); `
@@ -194,7 +193,7 @@ export default {
       let mg = { collection: img.collection, filename: img.filename, spid: img.spid, loaded: false, src: undefined };
       this.$set(this.images, id, mg);
       const url = this.imageUrl(img.collection, img.filename, null);
-      
+
       // let imgo = new Image();
       // imgo.onload = () => {
       //   mg.src = url;
@@ -218,11 +217,11 @@ export default {
   background: rgba(0,0,0,.2);
 }
 
-/* 
-fix for non-reproducable style="height 0px" issue when loading both carousels, 
-closing this one, switching card image, then reopening this carousel 
+/*
+fix for non-reproducable style="height 0px" issue when loading both carousels,
+closing this one, switching card image, then reopening this carousel
 */
-.full-screen-carousel >>> .v-window__container, 
+.full-screen-carousel >>> .v-window__container,
 .full-screen-carousel >>> .v-window__container .v-carousel__item {
   height: 100% !important;
 }

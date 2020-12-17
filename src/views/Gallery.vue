@@ -25,15 +25,23 @@
               v-for="img in loadedImages"
               :key="img.filename"
               d-flex
+              class="menu-wrapper"
             >
-              <a href="#">
-                <ImageItem
-                  v-bind:source="imageUrl(img.collection, img.filename)"
-                  v-bind:height="180"
-                  v-bind:id="img.unique_id"
-                  v-bind:title="imgTitle(img)"
-                />
-              </a>
+              <EntryViewTooltip
+                v-slot="{ on }"
+                :entry="img.specimen"
+                :selectedImg="img"
+              >
+                <div @click="open($event, on)" >
+                  <ImageItem
+                    :coll="img.collection"
+                    :filename="img.filename"
+                    v-bind:height="180"
+                    v-bind:id="img.unique_id"
+                    v-bind:title="imgTitle(img)"
+                  />
+                </div>
+              </EntryViewTooltip>
             </v-flex>
             <div class="flex-more"></div>
         </v-layout>
@@ -43,13 +51,15 @@
 </template>
 
 <script>
-import { mapGetters, mapActions } from 'vuex'
+import { mapGetters, mapActions, mapState } from 'vuex'
 import ImageItem from '@/components/ImageItem'
+import EntryViewTooltip from '@/components/EntryViewTooltip'
 
 export default {
   name: 'Gallery',
   components: {
-    ImageItem
+    ImageItem,
+    EntryViewTooltip
   },
   data () {
     return {
@@ -82,15 +92,26 @@ export default {
       let w = this.windowSizes.w
 
       let imgs = Math.floor(w / minW) * Math.ceil(h / minH)
-      console.log('max imgs', imgs)
       return imgs
     },
     loadedImages () {
       return this.images.slice(0, this.index + 1)
     },
+    xs () {
+      return this.$vuetify.breakpoint.name=='xs'
+    },
+    ...mapState(['cardOpen']),
     ...mapGetters(['imageUrl', 'getSpecimenById', 'images']),
   },
   methods: {
+    open(event, { click }) {
+      if (this.xs) {
+        return click(event)
+      }
+      if (!this.cardOpen) {
+        return click(event)
+      }
+    },
     onResize () {
       try {
         this.windowSizes.h = this.$refs.galleryContainer.clientHeight
@@ -99,7 +120,6 @@ export default {
         this.windowSizes.h = window.innerHeight
         this.windowSizes.w = window.innerWidth
       }
-      console.log('resized',this.maxImagesPerPage * 1.5,this.index)
       if ((this.maxImagesPerPage * 1.5) >= this.index) {
         this.loadMore()
       }
@@ -109,11 +129,9 @@ export default {
       let newIndex = this.index + numToLoad
       let nextIndex = newIndex + numToLoad
       let moreToQuery = true
-      console.log('loading more', this.index, newIndex, this.images.length)
       if (newIndex > this.images.length && !this.querying) {
         this.loading = true
         this.querying = true
-        console.log('more more')
         moreToQuery = await this.more()
         this.querying = false
         this.loading = false
@@ -124,19 +142,18 @@ export default {
         moreToQuery = await this.more()
         this.querying = false
       }
-      console.log(this.index)
     },
     imgTitle(img) {
       let spec = this.getSpecimenById(img.collection, img.spid)
-      // console.log(spec)
-      return [spec.ge, spec.sp].map(a => a && a.trim()).filter(Boolean).join(' ')
+      let title = [spec.ge, spec.sp].map(a => a && a.trim()).filter(Boolean).join(' ')
+
+      return title ? `${spec.cn} - ${title}` : `${spec.cn}`;
     },
     ...mapActions(['more'])
   },
   watch: {
     async images (newVal, oldVal) {
       // WIP
-      console.log('emit')
       this.$emit('new-images')
       await this.loadMore()
     }
@@ -154,5 +171,8 @@ export default {
   }
   .white-bg {
     background-color: #fff !important
+  }
+  .menu-wrapper .v-menu {
+    display: none;
   }
 </style>

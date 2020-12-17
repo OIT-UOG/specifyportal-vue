@@ -3,7 +3,7 @@
 // v-lazyload
 
 <template>
-  <v-card flat tile class="d-flex img_default_height">
+  <v-card flat tile class="d-flex img_default_height clickable" @click="fullScreen = !fullScreen">
     <v-flex
       class="tv-thumb-wrap ma-1"
       :id="id"
@@ -26,7 +26,7 @@
         v-if="use_summary"
         class="tv-thumb-summary"
       >
-        {{ this.title }}
+        {{ this.title || "\xa0" }}
       </div>
     </v-flex>
   </v-card>
@@ -50,10 +50,15 @@ export default {
         'wider': 324,
         'widest': 360,
       },
+      fullScreen: false,
     }
   },
   props: {
-    source: {
+    coll: {
+      type: String,
+      required: true
+    },
+    filename: {
       type: String,
       required: true
     },
@@ -86,21 +91,25 @@ export default {
       style += `width: ${this.sizeChart[this.size]}px;`
       return style
     },
+    items () {
+      return [ { collection: this.coll, filename: this.filename, loaded: false } ]
+    },
     width () {
       return this.pxSize(this.size)
+    },
+    source () {
+      return this.imageUrl(this.coll, this.filename);
     },
     loadedSource () {
       return this.loaded? this.source : ""
     },
-    ...mapGetters(['getImageSize'])
+    ...mapGetters(['getImageSize', 'imageUrl'])
   },
   methods: {
     pxSize(size) {
       return this.sizeChart[size]
     },
     setDataWidthAndSummary(self){
-      // console.log('self', self)
-      // console.log('this', this)
       this.setParentDataWidth(self)
       if (this.use_summary) {
         this.setSummary(self)
@@ -133,15 +142,12 @@ export default {
   },
   mounted() {
     let size = this.getImageSize(this.id)
-    // console.log()
     this.size = size || this.size
 
     let img = new Image()
     img.onload = () => {
       this.setDataWidthAndSummary(img)
       if (!size) {
-        // console.log('caching')
-        // console.log(this.size, this.width)
         this.setImageSize({
           unique_id: this.id,
           size: this.size,
@@ -150,12 +156,16 @@ export default {
       }
       this.loaded = true
     }
-    img.src = this.source
+    img.src = this.source;
   }
 }
 </script>
 
 <style>
+.clickable {
+  cursor: pointer;
+}
+
 .img_default_height {
   height: 180px;
 }

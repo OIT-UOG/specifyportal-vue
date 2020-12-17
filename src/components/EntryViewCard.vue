@@ -14,7 +14,7 @@
         :hide-actions="mapi==0"
         :hide-controls="mapi==0"
         :hide-delimiters="mapi==0"
-        class="no-background no-shadow"
+        class="no-background no-shadow min-height"
         :cycle="false"
         :max="width"
         v-model="caro_i"
@@ -100,6 +100,11 @@ export default {
       type: Boolean,
       required: false,
       default: true
+    },
+    selectedImg: {
+      type: Object,
+      required: false,
+      default: null,
     }
     // collection: {
     //   type: String,
@@ -122,11 +127,29 @@ export default {
       },
       zooms: [15, 10, 8],
       zoomi: 1,
-      caro_i: 0,
       fullScreen: false,
+      carousel_set: false,
+      caro_i_raw: 0,
     }
   },
+  watch: {
+    selectedImg() {
+      this.caro_i = this.entry.img.indexOf(this.selectedImg);
+    },
+  },
   computed: {
+    caro_i: {
+      get() {
+        if (!this.carousel_set) {
+          this.caro_i_raw = this.entry.img.indexOf(this.selectedImg)
+        }
+        this.carousel_set = true
+        return this.caro_i_raw
+      },
+      set(val) {
+        this.caro_i_raw = val
+      }
+    },
     xs () {
       return this.$vuetify.breakpoint.name=='xs'
     },
@@ -214,6 +237,9 @@ export default {
 }
 .sharp-shadow {
   text-shadow: 0px 1px 1px #000000;
+}
+.min-height {
+  min-height: 266px;
 }
 .denser  {
   height: 20px;
