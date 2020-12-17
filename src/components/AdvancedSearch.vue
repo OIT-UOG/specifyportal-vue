@@ -2,10 +2,11 @@
 	<v-expansion-panel
     v-model="expanded"
 		expand
+    class="pb-4"
 	>
 
 		<v-expansion-panel-content
-			v-for="f in visibleFilters"
+			v-for="(f, fi) in visibleFilters"
 			:key="f.colkey"
 			class="smaller-panel"
 		>
@@ -25,6 +26,12 @@
               ></v-checkbox>
             </v-flex>
           </div>
+          <component
+            v-else-if="f.subHeaderOverride"
+            :is="f.subHeaderOverride.component"
+            v-bind="f.subHeaderOverride"
+            v-on:input="closePanel(fi)"
+          ></component>
 				</v-layout>
 			</template>
 
@@ -48,12 +55,17 @@ import { mapActions, mapGetters, mapState } from 'vuex'
 import CollectionFilter from '@/components/CollectionFilter'
 import StringFilter from '@/components/StringFilter'
 import RangeFilter from '@/components/RangeFilter'
+import MapSearchFilter from '@/components/MapSearchFilter'
+import MapSearchChips from '@/components/MapSearchChips'
 
 
 export default {
 	components: {
 		CollectionFilter,
-		StringFilter
+    StringFilter,
+    RangeFilter,
+    MapSearchFilter,
+    MapSearchChips
 	},
 	data () {
     return {
@@ -62,7 +74,18 @@ export default {
           visible: true,
           component: CollectionFilter,
           hide_checkboxes: true
-        }
+        },
+        l1: {
+          title: 'Map Filter',
+          visible: true,
+          component: MapSearchFilter,
+          hide_checkboxes: true,
+          subHeaderOverride: {
+            component: MapSearchChips,
+            isOpen: false,
+          },
+          isOpen: false,
+        },
       },
       defaultFilter: {
         visible: true,
@@ -84,7 +107,7 @@ export default {
   },
   computed: {
     filters () {
-      return this.advancedSearchColumns.map((h) => {
+      return this.advancedSearchColumns.filter(h => h.solrname !== 'l11').map((h) => {
 
         let custom = this.defaultFilter
         if (h.solrname in this.customFilters) {
@@ -120,15 +143,6 @@ export default {
             }
             custom.max = this.resolveFilters[h.solrname].max
             custom.min = this.resolveFilters[h.solrname].min
-          } else if (h.solrname === 'l1') {
-            custom.max = 90
-            custom.between = true
-            custom.default = [40,50]
-
-          } else if (h.solrname === 'l11') {
-            custom.max = 180
-            custom.between = true
-            custom.default = [70,110]
           }
         }
         let { and, list } = this.getQueryTerm(h.solrname)
@@ -151,6 +165,9 @@ export default {
     visibleFilters () {
       return this.filters.filter(f => f.visible).map((f, i) => {
         f.isOpen = this.expanded[i] || false
+        if (f.subHeaderOverride) {
+          f.subHeaderOverride.isOpen = f.isOpen
+        }
         return f;
       })
     },
@@ -167,7 +184,10 @@ export default {
       let qt = this.getQueryTerm(field);
       qt.list.splice(i, 1);
       this.setQueryField({ field, and: qt.and, list: qt.list });
-		},
+    },
+    closePanel(index) {
+      this.expanded.splice(index, 1)
+    },
 		...mapActions(['setQueryField', 'getEdgeValue'])
 	}
 }
@@ -187,5 +207,11 @@ export default {
 }
 .small-checkbox .v-input--selection-controls__input {
 	margin-right: 4px;
+}
+</style>
+
+<style scoped>
+.v-expansion-panel {
+  box-shadow: none;
 }
 </style>
