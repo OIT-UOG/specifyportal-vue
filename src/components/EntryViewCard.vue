@@ -43,7 +43,20 @@
             fill-height
             :options="mapOptions"
           >
-          <!--           -->
+            <GmapPolygon
+              v-for="poly in filterPolyList"
+              :key="poly.id"
+              :paths="poly.path"
+              :editable="false"
+              :draggable="false"
+              :options="{
+                fillColor: poly.color,
+                strokeColor: poly.color,
+                strokeWeight: filterPolyIsHighlighted(poly) ? 3 : 2,
+                strokeOpacity: (filterPolyIsHighlighted(poly) ? 1 : 0.8) * (poly.selected ? 1 : 0),
+                fillOpacity: (poly.selected ? 0.35 : 0.15) + (filterPolyIsHighlighted(poly) ? 0.05 : 0),
+              }"
+            ></GmapPolygon>
             <GmapMarker
               :position="geo_coords"
               @dblclick="mapsSelector"
@@ -186,7 +199,13 @@ export default {
     isMapPage () {
       return this.caro_i == this.mapi
     },
-    ...mapGetters(['getSpecimenById', 'imageUrl', 'visibleColumns'])
+    ...mapGetters([
+      'getSpecimenById',
+      'imageUrl',
+      'visibleColumns',
+      'filterPolyList',
+      'filterPolyIsHighlighted',
+    ])
   },
   methods: {
     toggleZoom () {
