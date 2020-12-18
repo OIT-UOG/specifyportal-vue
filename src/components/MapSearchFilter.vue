@@ -1,5 +1,5 @@
 <template>
-  <div style="height: 200px;">
+  <div style="height: 200px; overflow: hidden">
     <router-link to="/map">
       <GmapMap
         :center="center"
@@ -11,12 +11,10 @@
           fullscreenControl: false,
           mapTypeControl: false,
           scaleControl: false,
-          streetViewControl: false,
           rotateControl: false,
-          fullscreenControl: false,
           disableDefaultUI: true,
         }"
-        style="width:100%; height:100%;"
+        style="width:100%; height:248px; margin-top:-24px;"
         fill-height
         @idle="initializeMap"
       >
