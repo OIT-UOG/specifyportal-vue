@@ -34,18 +34,19 @@ const ROWS_PER_QUERY = 50
 
 
 class Query {
-  constructor({ collections, queryTerms = ["*"], sort = false, asc = true, page = 0 }) {
+  constructor({ collections, queryTerms = ["*"], sort = false, asc = true, page = 0, dump = false }) {
     this.collections = [...collections];
     this.collections.sort();
     this.qs = [...queryTerms];
     this.sort = sort;
     this.asc = asc;
-    this.page = page;
+    this.page = dump ? 0 : page;
     this.results = [];
     this.lastPageNumber = null;
     this.total = null;
     this.facet_counts = {};
     this.msg = null;
+    this.endpoint = dump ? 'searchdump' : 'search';
   }
 
   get url() {
@@ -64,7 +65,7 @@ class Query {
     for (const [key, value] of Object.entries(params)) {
       paraml.push(`${key}=${encodeURIComponent(value)}`);
     }
-    return API_URL + `/search?${paraml.join("&")}`;
+    return API_URL + `/${this.endpoint}?${paraml.join("&")}`;
   }
 
   get hasMorePages() {
@@ -176,6 +177,7 @@ export default new Vuex.Store({
     queryTerms: {},
     manualQueryTerms: [],
     queryLoading: false,
+    dumpLoading: false,
     queryRan: false,
     queryMessage: null,
     sort: {
@@ -198,6 +200,8 @@ export default new Vuex.Store({
     lastPage: null, // fill this
     // abort stuff. not sure if this saves api flops
     abortController: null,
+    dumpAbortController: null,
+    dumpAborted: false,
     fieldTranslations: {
       startDate: "Collection Date",
       collection: "Collection",
@@ -244,6 +248,9 @@ export default new Vuex.Store({
     },
     setQueryRan(state, ran) {
       state.queryRan = ran;
+    },
+    setDumpLoading(state, loading) {
+      state.dumpLoading = loading;
     },
     setSyntax(state, syntax) {
       state.apiSyntax = syntax;
@@ -311,7 +318,13 @@ export default new Vuex.Store({
     setAbortController(state, controller) {
       state.abortController = controller;
     },
-    rebuildQuery(state) {
+    setDumpAbortController(state, controller) {
+      state.dumpAbortController = controller;
+    },
+    setDumpAborted(state, aborted) {
+      state.dumpAborted = aborted;
+    },
+    rebuildQuery(state, dump) {
       let params = {
         collections: state.queryTerms.coll.and ? [] : [...state.queryTerms.coll.list],
       };
@@ -344,6 +357,9 @@ export default new Vuex.Store({
       }
 
       state.query = new Query(params);
+      if (dump) {
+        state.dumpQuery = new Query({ ...params, dump: true });
+      }
       state.queryMessage = null;
       state.queryRan = false;
     },
@@ -786,14 +802,45 @@ export default new Vuex.Store({
       context.commit("setQueryLoading", false);
       return docs;
     },
-    async runNewQuery(context) {
-      let query = context.state.query;
+    async _doDump(context) {
+      context.commit("setDumpLoading", true);
+      if (context.state.dumpAbortController !== null) {
+        context.state.dumpAbortController.abort();
+      }
+      const controller = new AbortController();
+      const signal = controller.signal;
+      context.commit("setDumpAbortController", controller);
+      let docs;
+      try {
+        docs = await context.state.dumpQuery.quickFetch(signal);
+      } catch (error) {
+        if (error.name === "AbortError") {
+          return false;
+        }
+        throw error;
+      }
+      context.commit("setDumpLoading", false);
+      return docs;
+    },
+    async runNewQuery(context, dump) {
+      let { query } = context.state;
+      let queryDispatch = "_doQuery";
+      if (dump) {
+        query = context.state.dumpQuery;
+        queryDispatch = "_doDump";
+      }
 
-      await context.dispatch("_doQuery");
+      await context.dispatch(queryDispatch);
 
-      context.commit("setGeoFacets", query.facet_counts);
-      context.commit("setQueryMessage", query.msg);
-      context.commit("setLastPage", query.lastPageNumber);
+      if (dump && context.state.dumpAborted) {
+        return
+      }
+
+      if (!dump) {
+        context.commit("setGeoFacets", query.facet_counts);
+        context.commit("setQueryMessage", query.msg);
+        context.commit("setLastPage", query.lastPageNumber);
+      }
       // ensure map filtering is used before editing entries otherwise non-location entries won't show
       let total = query.total;
       let entries = [...query.results];
@@ -803,9 +850,12 @@ export default new Vuex.Store({
       }
       context.commit("setTotal", total);
       context.commit("setEntries", entries);
+      if (dump) {
+        context.state.query.updatePage(context.state.query.lastPageNumber + 1);
+      }
     },
     async more(context) {
-      let query = context.state.query;
+      const { query } = context.state;
       if (!context.state.queryRan || !query.hasMorePages) {
         return false;
       }
@@ -819,6 +869,18 @@ export default new Vuex.Store({
         return false
       }
       return true;
+    },
+    async runDumpQuery(context) {
+      context.commit("setDumpAborted", false);
+      context.commit("rebuildQuery", true);
+      await context.dispatch("runNewQuery", true);
+      return context.state.entries;
+    },
+    abortDump(context) {
+      if (context.state.dumpAbortController !== null) {
+        context.state.dumpAbortController.abort();
+      }
+      context.commit("setDumpAborted", true);
     },
     setImageSize(context, payload) {
       context.commit("_setImgSize", {
