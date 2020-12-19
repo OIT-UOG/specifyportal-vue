@@ -1,32 +1,30 @@
 <template>
   <div>
-    <v-chip-group column>
-      <v-chip
-        v-for="poly in filterPolyList"
-        :key="poly.id"
-        close
-        :outline="!poly.selected"
-        close-icon="mdi-close-outline"
-        :color="poly.color"
-        label
-        small
-        :class="[filterPolyIsHighlighted(poly) ? 'chip-active' : '', 'poly-chip']"
-        flat
-        @input="handleClose(poly)"
-        @click="handleSelect($event, poly)"
-      ></v-chip>
-      <v-chip
-        v-if="isOpen && this.bounds !== null"
-        close-icon="mdi-close-outline"
-        outline
-        label
-        small
-        flat
-        @click="handleNew($event)"
-      >
-        <v-icon>crop</v-icon>+
-      </v-chip>
-    </v-chip-group>
+    <v-chip
+      v-for="poly in filterPolyList"
+      :key="poly.id"
+      close
+      :outline="!poly.selected"
+      close-icon="mdi-close-outline"
+      :color="poly.color"
+      label
+      small
+      :class="[filterPolyIsHighlighted(poly) ? 'chip-active' : '', 'poly-chip']"
+      flat
+      @input="handleClose(poly)"
+      @click="handleSelect($event, poly)"
+    ></v-chip>
+    <v-chip
+      v-if="isOpen && this.bounds !== null"
+      close-icon="mdi-close-outline"
+      outline
+      label
+      small
+      flat
+      @click="handleNew($event)"
+    >
+      <v-icon>crop</v-icon>+
+    </v-chip>
   </div>
 </template>
 
