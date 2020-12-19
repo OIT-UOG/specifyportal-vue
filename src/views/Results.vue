@@ -83,6 +83,11 @@ export default {
       pagination: {}
     }
   },
+  watch: {
+    query() {
+      this.pagination.page = 1;
+    },
+  },
   asyncComputed: {
     pageEntries: {
       async get() {
@@ -113,7 +118,7 @@ export default {
       return this.$vuetify.breakpoint.name=='xs'
     },
     ...mapGetters(['visibleColumns',]),
-    ...mapState({queryMessage: 'queryMessage', entries: 'entries', loading: 'queryLoading', cardOpen: 'cardOpen', total: 'total'})
+    ...mapState({queryMessage: 'queryMessage', entries: 'entries', loading: 'queryLoading', cardOpen: 'cardOpen', total: 'total', query: 'query'})
   },
   methods: {
     async changeSort (column) {
