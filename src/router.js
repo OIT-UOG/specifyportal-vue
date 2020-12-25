@@ -1,10 +1,11 @@
 import Vue from 'vue';
 import Router from 'vue-router';
 import Results from './views/Results.vue';
+import store from './store';
 
 Vue.use(Router);
 
-export default new Router({
+const router = new Router({
   routes: [
     {
       path: '/',
@@ -26,3 +27,18 @@ export default new Router({
     }
   ],
 });
+
+router.beforeEach((to, from, next) => {
+  if (!_.isEmpty(to.query)) {
+    if ('silent' in to.params) {
+      next();
+      return;
+    }
+    next();
+    store.dispatch('loadFromParams', to.query);
+    return;
+  }
+  next();
+});
+
+export default router;

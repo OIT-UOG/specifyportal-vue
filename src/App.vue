@@ -13,6 +13,7 @@
 // import ResultTable from './components/ResultTable'
 import Navbar from '@/components/Navbar'
 import ViewNav from '@/components/ViewNav'
+import { mapState } from 'vuex';
 
 export default {
   name: 'App',
@@ -24,6 +25,18 @@ export default {
     return {
       //
     }
-  }
+  },
+  watch: {
+    routerParams() {
+      this.$router.push({
+        name: this.$route.name,
+        params: { silent: true },
+        query: this.routerParams,
+      });
+    },
+  },
+  computed: {
+    ...mapState(['routerParams']),
+  },
 }
 </script>

@@ -37,6 +37,6 @@ new Vue({
   store,
   render: h => h(App),
   async created() {
-    await this.$store.dispatch('loadSettings', API_URL);
+    await this.$store.dispatch('loadSettings', { apiUrl: API_URL, query: router.currentRoute.query });
   },
 }).$mount('#app');

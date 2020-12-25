@@ -5,11 +5,7 @@
     max-width="300px"
   >
     <template v-slot:activator="{ on }">
-      <v-btn icon flat
-        v-on="on"
-      >
-        <v-icon class="light-icon" v-on="on">save_alt</v-icon>
-      </v-btn>
+      <slot name="activator" :on="on"></slot>
     </template>
 
     <v-card>
@@ -99,12 +95,3 @@ export default {
   },
 }
 </script>
-
-<style scoped>
-.v-btn .v-icon.light-icon {
-  color: rgba(0,0,0,0.6);
-}
-.v-btn .v-icon.light-icon:hover {
-  color: rgba(0,0,0,0.84);
-}
-</style>

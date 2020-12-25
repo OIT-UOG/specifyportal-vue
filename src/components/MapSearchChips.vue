@@ -67,7 +67,7 @@ export default {
     handleNew(event) {
       event.stopPropagation();
       this.createFilterPoly({ tl: this.center, centered: true })
-      this.$router.push('/map');
+      this.$router.push({ name: 'map', params: { silent: true }, query: this.$route.query });
     },
     ...mapActions([
         'setGoogle',

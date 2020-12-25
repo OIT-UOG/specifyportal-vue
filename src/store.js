@@ -50,6 +50,14 @@ class Query {
   }
 
   get url() {
+    const paraml = [];
+    for (const [key, value] of Object.entries(this.urlParams)) {
+      paraml.push(`${key}=${encodeURIComponent(value)}`);
+    }
+    return API_URL + `/${this.endpoint}?${paraml.join("&")}`;
+  }
+
+  get urlParams() {
     const params = {};
     const colls = this.collections.join(",");
     if (colls) {
@@ -61,11 +69,36 @@ class Query {
     }
     params.page = this.page;
     params.q = JSON.stringify(this.qs);
-    const paraml = [];
+
     for (const [key, value] of Object.entries(params)) {
-      paraml.push(`${key}=${encodeURIComponent(value)}`);
+      // params[key] = encodeURIComponent(value);
     }
-    return API_URL + `/${this.endpoint}?${paraml.join("&")}`;
+    return params;
+  }
+
+  fromURL(url) {
+    let paramUrl = url.split(API_URL + `/${this.endpoint}`)[1];
+    const paramBank = new URLSearchParams(paramUrl);
+    paramMap = {
+      colls: { name: 'collections', parse: v => v.split(',') },
+      sort: { name: 'sort' },
+      asc: { name: 'asc' },
+      dump: { name: 'dump', parse: () => this.endpoint.indexOf('dump') > -1 },
+      q: { name: 'queryTerms', parse: v => JSON.parse(v) },
+    }
+    let params = {}
+    let extraParams = {}
+    paramBank.entries().forEach(([k, v]) => {
+      let p = paramMap[k]
+      if (p) {
+        params[p.name] = p.parse(v)
+      } else {
+        extraParams[k] = v
+      }
+    });
+    let q = new Query(params)
+    q.extraParams = extraParams;
+    return q
   }
 
   get hasMorePages() {
@@ -165,6 +198,176 @@ const POLY_COLORS = [
 
 const GUAM = { lat: 13.477342, lng: 144.791369 };
 
+function floatToB64(f) {
+  const fa = new Float64Array(1);
+  fa[0] = f;
+  const b = new Uint8Array(fa.buffer);
+  let bin = '';
+  for (let i=0;i<b.byteLength;i++) {
+    bin += String.fromCharCode(b[i]);
+  }
+  return btoa(bin).slice(0,-1).replaceAll('=', '-').replaceAll('+', '<').replaceAll('/', '>');
+}
+
+function b64ToFloat(s) {
+  const bs = atob((s + '-').replaceAll('-', '=').replaceAll('<', '+').replaceAll('>', '/'));
+  const b = new Uint8Array(bs.length);
+  for (let i=0;i<bs.length;i++) {
+    b[i] = bs.charCodeAt(i);
+  }
+  const f = new Float64Array(b.buffer);
+  return f[0];
+}
+
+function polyEncode(polys) {
+  /*
+    encoding: ~ delimited
+      list of possible lat/lng values BASE64 encoded separated by ,
+        13.12,142.312,123.123
+      list of polys ~ delimited
+        poly no delimiter
+          !poly.selected no delim
+            - or empty string
+          path: index into list of possible lat/lng alternating. , delim after if index _ delim after if actual coord (b64 encoded). ends with a delim
+            0,2,0,144.123_1,
+          poly.id % colors.length DELTA (if > 1) no delim
+            delta or empty string
+  */
+  const pList = Object.values(polys)
+  const possiblePnts = {};
+  const ptMap = {};
+  let pstr = "";
+
+  pList.forEach((p) => {
+    p.path.forEach(({lat, lng}) => {
+      const c = [lat, lng];
+      c.forEach((l) => {
+        if (!(l in possiblePnts)) {
+          possiblePnts[l] = { c: 1 };
+        } else {
+          possiblePnts[l].c += 1;
+        }
+      })
+    });
+  });
+
+  let i = 0;
+  Object.entries(possiblePnts).forEach(([l, v]) => {
+    if (v.c > 1) {
+      pstr += floatToB64(l) + ',';
+      ptMap[l] = i;
+      i += 1;
+    }
+  });
+  pstr = pstr.slice(0,-1) + '~';
+
+  let currColor = 0;
+  pList.forEach((p)=> {
+    if (!p.selected) {
+      pstr += '-';
+    }
+
+    p.path.forEach(({lat, lng}) => {
+      const c = [lat, lng];
+      c.forEach((l) => {
+        if (l in ptMap) {
+          pstr += ptMap[l] + ',';
+        } else {
+          pstr += floatToB64(l) + '_';
+        }
+      });
+    });
+
+    const cid = p.id;
+    let diff = 0;
+    while (((cid + diff) % POLY_COLORS.length) !== currColor) {
+      diff -= 1;
+    }
+    if (diff !== 0) {
+      pstr += (-diff) + '';
+    }
+    currColor = (cid + 1) % POLY_COLORS.length;
+    pstr += '~';
+  });
+  return pstr.slice(0, -1);
+}
+
+function polyDecode(s) {
+  const [ms, ...ps] = s.split('~');
+  const cMap = ms.split(',').map(b64ToFloat);
+  let currId = 0;
+  return ps.map((v) => {
+    const path = [];
+    let pt = {};
+    let selected = true;
+    if (v.startsWith('-')) {
+      selected = false;
+      v = v.slice(1);
+    }
+
+    let id = currId;
+
+    let i = 0;
+    let pi = 0;
+    let bs = '';
+    const latlng = ['lat', 'lng'];
+    while (i < v.length) {
+      const t = v[i];
+      if (t === ',' || t === '_') {
+        if (t === ',') {
+          pt[latlng[pi % 2]] = cMap[parseInt(bs)];
+        } else {
+          pt[latlng[pi % 2]] = b64ToFloat(bs);
+        }
+        if (pi % 2) {
+          path.push(pt);
+          pt = {};
+        }
+        pi += 1;
+        bs = '';
+        t = '';
+      }
+      bs += t;
+      i += 1;
+    }
+
+    if (bs) {
+      currId += parseInt(bs);
+      id = currId;
+    }
+
+    currId += 1;
+
+    const [color, dark] = POLY_COLORS[id % POLY_COLORS.length];
+
+    return {
+      path,
+      selected,
+      id,
+      color,
+      dark,
+    };
+  });
+}
+
+function parseMapValues(v) {
+  let [zoom, lat, lng] = v.split('~');
+  zoom = parseInt(zoom, 36);
+  lat = b64ToFloat(lat);
+  lng = b64ToFloat(lng);
+
+  return { zoom, center: { lat, lng } };
+}
+
+function encodeMapValues(zoom, center) {
+  let s = '';
+  s += zoom.toString(36) + '~';
+  s += floatToB64(center.lat) + '~';
+  s += floatToB64(center.lng);
+  return s;
+}
+
+
 export default new Vuex.Store({
   state: {
     // general states
@@ -190,7 +393,6 @@ export default new Vuex.Store({
     fields: {},
     fieldList: [],
     entries: [],
-    query: null,
     geoFacets: [],
     geoFacetsFiltered: [],
     globalGeoFacets: [],
@@ -220,6 +422,7 @@ export default new Vuex.Store({
     mapCenter: GUAM,
     mapBounds: null,
     filterPolyHighlighted: null,
+    routerParams: null,
   },
   mutations: {
     setDrawer(state, open) {
@@ -324,7 +527,13 @@ export default new Vuex.Store({
     setDumpAborted(state, aborted) {
       state.dumpAborted = aborted;
     },
-    rebuildQuery(state, dump) {
+    setRouterParams(state, params) {
+      state.routerParams = params;
+    },
+    rebuildQuery(state, args) {
+      const dump = args && args.dump;
+      const onlyUrl = args && args.onlyUrl;
+
       let params = {
         collections: state.queryTerms.coll.and ? [] : [...state.queryTerms.coll.list],
       };
@@ -348,20 +557,40 @@ export default new Vuex.Store({
             }),
           ];
         });
-      const queryTerms = [state.apiSyntax.AND, ...state.searchTerms, ...fs, ...state.manualQueryTerms];
-      params.queryTerms = queryTerms;
 
       if (state.sort.field !== null) {
         params.sort = state.sort.field;
         params.asc = state.sort.asc;
       }
 
-      state.query = new Query(params);
-      if (dump) {
-        state.dumpQuery = new Query({ ...params, dump: true });
+      // assumes maunalQueryTerms is only for map. might need to change in the future
+      const rawQueryTerms = [state.apiSyntax.AND, ...state.searchTerms, ...fs];
+      const queryTerms = [...rawQueryTerms, ...state.manualQueryTerms];
+      if (rawQueryTerms[1].endsWith('*')) {
+        rawQueryTerms[1] = rawQueryTerms[1].slice(0, -1);
       }
-      state.queryMessage = null;
-      state.queryRan = false;
+      const urlParams = { ...params, queryTerms: rawQueryTerms };
+      params.queryTerms = queryTerms;
+
+      if (!onlyUrl) {
+        state.query = new Query(params);
+      }
+      const urlQuery = new Query(urlParams);
+      if (dump && !onlyUrl) {
+        state.dumpQuery = new Query({ ...params, dump: true });
+      } else {
+        const rParams = { ...urlQuery.urlParams };
+        delete rParams.page;
+        if (!_.isEmpty(state.filterPolys)) {
+          rParams.p = polyEncode(state.filterPolys);
+          rParams.m = encodeMapValues(state.mapZoom, state.mapCenter);
+        }
+        state.routerParams = rParams;
+      }
+      if (!onlyUrl) {
+        state.queryMessage = null;
+        state.queryRan = false;
+      }
     },
     setSearchTerms(state, terms) {
       state.searchTerms = terms && terms.length !== 0 ? terms : ["*"];
@@ -561,7 +790,8 @@ export default new Vuex.Store({
     },
   },
   actions: {
-    async loadSettings(context, apiUrl) {
+    async loadSettings(context, { apiUrl, query = {} }) {
+      let q = { ...query };
       API_URL = apiUrl;
       let resp = await fetch(API_URL + "/model");
       let fields = await resp.json();
@@ -601,7 +831,123 @@ export default new Vuex.Store({
       await context.dispatch("runNewQuery");
       context.commit('setGlobalGeoFacets', JSON.parse(JSON.stringify(context.state.geoFacets)));
       context.commit('setGeoFacetsFilter', context.state.geoFacets.map(f => true))
+
+      if(!_.isEmpty(q)) {
+        // load search from query params
+        await context.dispatch("loadFromParams", q);
+      }
       context.commit("setLoadingState", true);
+    },
+    loadFromParams(context, params) {
+      const sort = {};
+      let doPolys = false;
+      let map = null;
+      const paramMap = {
+        colls: {
+          name: 'collections',
+          parse: v => v.split(','),
+          after: (cs) => {
+            context.commit('setQueryField', { field: 'coll', and: false, list: cs });
+          },
+        },
+        sort: { name: 'sort', after: (fld) => { sort.field = fld; } },
+        asc: { name: 'asc', after: (asc) => { sort.asc = asc; } },
+        // dump: { name: 'dump', parse: () => this.endpoint.indexOf('dump') > -1 },
+        q: {
+          name: 'queryTerms',
+          parse: v => JSON.parse(v),
+          after: (terms) => {
+            // in the off-chance that AND/OR is changed in the future
+            const AND = terms[0];
+            let i = 1;
+            const searchTerms = [];
+            while ((typeof terms[i]) === 'string') {
+              let term = terms[i];
+              if (!term.endsWith('*')) {
+                term += '*';
+              }
+              searchTerms.push(term);
+              i += 1;
+            }
+            context.commit('setSearchTerms', searchTerms);
+
+            while (i < terms.length) {
+              let [and, ...rest] = terms[i];
+              and = and === AND;
+
+              const field = rest[0][0];
+              let manual = false;
+              const list = [];
+              for (let j = 0; j < rest.length; j += 1) {
+                const item = rest[j];
+                if (item[0] !== field) {
+                  manual = true;
+                  break;
+                }
+                const [, ...lis] = item;
+                if (lis.length === 1) {
+                  list.push(lis[0]);
+                } else {
+                  list.push(lis);
+                }
+                context.commit('setQueryField', { field, and, list });
+              }
+              if (manual) {
+                context.commit('setManualQueryField', terms[i]);
+              }
+              i += 1;
+            }
+          },
+        },
+        p: {
+          parse: v => polyDecode(v),
+          after: (v) => {
+            v.forEach((p) => {
+              doPolys = true;
+              while (context.state.filterPolyIdCounter < p.id) {
+                context.commit('incrementFilterPolyCounter');
+              }
+              context.commit('addFilterPoly', p);
+              context.commit('incrementFilterPolyCounter');
+            });
+          },
+        },
+        m: {
+          parse: v => parseMapValues(v),
+          after: ({ center, zoom }) => {
+            map = { center, zoom };
+          },
+        },
+      };
+
+      if (sort.field) {
+        context.commit('setSort', sort);
+      }
+      const queryParams = {};
+      Object.entries(params).forEach(([k, v]) => {
+        if (k in paramMap) {
+          const item = paramMap[k];
+          let val = v;
+          if ('parse' in item) {
+            val = item.parse(v);
+          }
+          if ('name' in item) {
+            queryParams[item.name] = val;
+          }
+          if ('after' in item) {
+            item.after(val);
+          }
+        }
+      });
+      if (doPolys) {
+        if (map) {
+          context.commit('setMapCenter', map.center);
+          context.commit('setMapZoom', map.zoom);
+        }
+        context.dispatch('updateGeoFacetsFilter');
+      }
+      context.commit('rebuildQuery');
+      return context.dispatch('runNewQuery');
     },
     setDrawer(context, open) {
       context.commit("setDrawer", open);
@@ -615,9 +961,17 @@ export default new Vuex.Store({
     },
     setMapZoom(context, zoom) {
       context.commit('setMapZoom', zoom);
+      context.commit('setRouterParams', {
+        ...context.state.routerParams,
+        m: encodeMapValues(context.state.mapZoom, context.state.mapCenter),
+      });
     },
     setMapCenter(context, center) {
       context.commit('setMapCenter', center);
+      context.commit('setRouterParams', {
+        ...context.state.routerParams,
+        m: encodeMapValues(context.state.mapZoom, context.state.mapCenter),
+      });
     },
     setMapBounds(context, bounds) {
       context.commit('setMapBounds', bounds)
@@ -705,6 +1059,7 @@ export default new Vuex.Store({
           //   list: [],
           // })
         }
+        context.commit('rebuildQuery', { onlyUrl: true } )
         return false
       }
 
@@ -767,6 +1122,7 @@ export default new Vuex.Store({
         await context.dispatch('setManualQueryField', [manual]);
         return true
       }
+      context.commit('rebuildQuery', { onlyUrl: true } )
       return false
     }, 200),
     sort(context, { field, asc = true }) {
@@ -872,7 +1228,7 @@ export default new Vuex.Store({
     },
     async runDumpQuery(context) {
       context.commit("setDumpAborted", false);
-      context.commit("rebuildQuery", true);
+      context.commit("rebuildQuery", { dump: true });
       await context.dispatch("runNewQuery", true);
       return context.state.entries;
     },

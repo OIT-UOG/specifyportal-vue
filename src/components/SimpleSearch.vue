@@ -42,6 +42,7 @@ export default {
       searchQuery: '',
       isTyping: false,
       isLoading: false,
+      fromRoute: false,
     }
   },
   computed: {
@@ -53,20 +54,34 @@ export default {
       }
       return 'search'
     },
+    routeQuery() {
+      const q = this.$route.query;
+      if (q.q) {
+        return JSON.parse(q.q)[1];
+      }
+      return null;
+    },
     ...mapState(['loaded'])
     // ...mapGetters(['moreToQuery'])
   },
   watch: {
     async searchQuery () {
-      this.isTyping = true
+      this.isTyping = true;
+      if (this.fromRoute) {
+        this.fromRoute = false;
+        return;
+      }
       await this.search()
     },
-    async loaded () {
-      if (this.$route.query.q) {
-        this.searchQuery = this.$route.query.q
+    routeQuery() {
+      if (this.routeQuery === null) {
+        return;
       }
-      await this.doSearch(this.searchQuery + '*')
-    }
+      if (!this.$route.params.silent) {
+        this.fromRoute = true;
+        this.searchQuery = this.routeQuery;
+      }
+    },
   },
   methods: {
     async search_and_close() {
@@ -94,6 +109,9 @@ export default {
     ...mapActions(['setSearchTerms', 'setDrawer'])
   },
   async mounted () {
+    this.fromRoute = true;
+    this.searchQuery = this.routeQuery;
+
     this.hint_index = this.hints.length - 1
     setInterval(() => {
       if (this.hinting) {

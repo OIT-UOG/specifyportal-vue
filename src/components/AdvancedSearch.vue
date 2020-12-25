@@ -105,6 +105,27 @@ export default {
       expanded: [],
     }
   },
+  watch: {
+    loaded() {
+      this.filters
+        .map((f, i) => [i, f])
+        .filter(([, f]) => f.hide_checkboxes)
+        .forEach(([i, f]) => {
+          let map = false;
+          if (f.colkey === 'l1') {
+            if (this.filterPolyList.length > 0) {
+              map = true;
+            }
+          }
+          if (f.list.length > 0 || map) {
+            this.openPanel(i);
+            this.closePanel(i);
+            this.openPanel(i);
+          }
+
+        })
+    },
+  },
   computed: {
     filters () {
       return this.advancedSearchColumns.filter(h => h.solrname !== 'l11').map((h) => {
@@ -171,7 +192,8 @@ export default {
         return f;
       })
     },
-    ...mapGetters(['advancedSearchColumns', 'getQueryTerm'])
+    ...mapGetters(['advancedSearchColumns', 'getQueryTerm', 'filterPolyList']),
+    ...mapState(['loaded']),
   },
 	methods: {
     handleChange(event, filter, i) {
@@ -187,6 +209,9 @@ export default {
     },
     closePanel(index) {
       this.expanded.splice(index, 1)
+    },
+    openPanel(index) {
+      this.expanded[index] = true;
     },
 		...mapActions(['setQueryField', 'getEdgeValue'])
 	}
