@@ -41,6 +41,7 @@ services:
       - FORM_URL=${FORM_URL}
       - ISSUE_PAGE_LINK=${ISSUE_PAGE_LINK}
       - API_URL=${API_URL}
+      - NODE_ENV=production
     volumes:
       - build:/app/build
       - root:/app/transfer:ro
