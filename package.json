@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service build --mode test --modern --dest \"build/viewer\" --watch",
-    "build": "NODE_ENV=production vue-cli-service build --modern --dest \"temp\"",
+    "build": "vue-cli-service build --modern --dest \"temp\"",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
