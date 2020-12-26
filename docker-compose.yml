@@ -44,7 +44,7 @@ services:
     volumes:
       - build:/app/build
       - root:/app/transfer:ro
-    command: /bin/sh -c 'npm run build && mkdir build/viewer && echo built && while [[ "$$(curl --connect-timeout 5 -s -o /dev/null -w ''%{http_code}'' api:8080/specify-solr/)" != "200" ]]; do echo ..; sleep 5; done; cp -r temp/* build/viewer/ && for f in transfer/*google*; do cp "$$f" build/viewer/ && cd build/viewer && sh insert_google_analytics.sh && echo transferred'
+    command: /bin/sh -c 'npm run build && mkdir build/viewer && echo built && while [[ "$$(curl --connect-timeout 5 -s -o /dev/null -w ''%{http_code}'' api:8080/specify-solr/)" != "200" ]]; do echo ..; sleep 5; done; cp -r temp/* build/viewer/ && for f in transfer/*google*; do cp "$$f" build/viewer/; done; cd build/viewer && sh insert_google_analytics.sh && echo transferred'
 
 volumes:
   build:
