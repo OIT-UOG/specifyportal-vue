@@ -15,3 +15,9 @@ To spin up a dev version with hot-reloading of Viewer in specific, you can add t
 `docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f nginx-proxy-compose.yaml up --force-recreate --build`
 
 Note\* Running `nginx-proxy-compose.yaml` a bunch of times will build up the Let's Encrypt ratelimit for the specified domain. We only get 50 a week, so it may be prudent to spin that compose file up/down separately from the rest and/or leave their volumes alone once the certs are initially created.
+
+## deploy
+
+on first deploy: `docker-compose -f nginx-proxy-compose.yaml -f docker-compose.yml up -d`
+on subsequent deploys, you don't want to restart nginx and letsencrypt as it uses up the letsencrypt ratelimit bucket: `docker-compose up -d --build --force-recreate` 
+You may also want to remove the viewer_build volume before starting it up to ensure changes are actually rebuilt `docker-compose down --volume; docker volume rm viewer_build`. 
