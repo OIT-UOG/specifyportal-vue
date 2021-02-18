@@ -312,7 +312,7 @@ function polyDecode(s) {
     let bs = '';
     const latlng = ['lat', 'lng'];
     while (i < v.length) {
-      const t = v[i];
+      let t = v[i];
       if (t === ',' || t === '_') {
         if (t === ',') {
           pt[latlng[pi % 2]] = cMap[parseInt(bs)];
