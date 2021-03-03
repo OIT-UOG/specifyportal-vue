@@ -22,6 +22,7 @@ services:
       - VIRTUAL_PORT=8000
       - VIRTUAL_HOST=${API_URL}
       - LETSENCRYPT_HOST=${API_URL}
+      - HARDCODE_HTTPS=${HARDCODE_HTTPS}
     restart: on-failure
 
   frontpage:
