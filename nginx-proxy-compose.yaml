@@ -22,6 +22,7 @@ services:
       - vhost:/etc/nginx/vhost.d
       - share:/usr/share/nginx/html
       - certs:/etc/nginx/certs
+      - acme:/etc/acme.sh  # required for letsencrypt's switch to acme
     environment:
       - DEFAULT_EMAIL=${LETSENCRYPT_EMAIL}
       - NGINX_PROXY_CONTAINER=specify-nginx-proxy
@@ -30,3 +31,4 @@ volumes:
   vhost:
   share:
   certs:
+  acme:
