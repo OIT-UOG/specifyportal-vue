@@ -49,7 +49,7 @@ class Query {
     this.results = [];
     this.lastPageNumber = null;
     this.total = null;
-    this.facet_counts = {};
+    this.facet_counts = [];
     this.msg = null;
     this.endpoint = dump ? 'searchdump' : 'search';
   }
