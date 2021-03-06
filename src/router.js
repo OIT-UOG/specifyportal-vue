@@ -28,17 +28,13 @@ const router = new Router({
   ],
 });
 
-router.beforeEach((to, from, next) => {
+router.afterEach((to, from) => {
   if (!_.isEmpty(to.query)) {
     if ('silent' in to.params) {
-      next();
       return;
     }
-    next();
-    store.dispatch('loadFromParams', to.query);
-    return;
+    store.dispatch('queueParamLoad', to.query);
   }
-  next();
 });
 
 export default router;

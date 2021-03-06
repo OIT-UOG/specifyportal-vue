@@ -129,20 +129,22 @@ export default {
     }
   },
   computed: {
-    xs () {
-      return this.$vuetify.breakpoint.name=='xs'
+    xs() {
+      return this.$vuetify.breakpoint.name === 'xs';
     },
-    is_issue () {
-      return this.issue != 'suggestion'
+    is_issue() {
+      return this.issue !== 'suggestion';
     },
     browserInfo() {
       // http://mrbool.com/how-to-detect-different-browsers-and-their-versions-using-javascript/25424
-      var objappVersion = navigator.appVersion;
-      var objAgent = navigator.userAgent;
-      var objbrowserName  = navigator.appName;
-      var objfullVersion  = ''+parseFloat(navigator.appVersion);
-      var objBrMajorVersion = parseInt(navigator.appVersion,10);
-      var objOffsetName,objOffsetVersion,ix;
+      // let objappVersion = navigator.appVersion;
+      const objAgent = navigator.userAgent;
+      let objbrowserName = navigator.appName;
+      let objfullVersion = '' + parseFloat(navigator.appVersion);
+      let objBrMajorVersion = parseInt(navigator.appVersion, 10);
+      let objOffsetName;
+      let objOffsetVersion;
+      let ix;
 
       // In Chrome
       if ((objOffsetVersion=objAgent.indexOf("Chrome"))!=-1) {

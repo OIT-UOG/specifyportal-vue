@@ -33,6 +33,11 @@ const ROWS_PER_QUERY = 50
 // could make it high and lazy-load the images.
 
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+
 class Query {
   constructor({ collections, queryTerms = ["*"], sort = false, asc = true, page = 0, dump = false }) {
     this.collections = [...collections];
@@ -182,7 +187,14 @@ function isEmpty(obj) {
 }
 
 
-let API_URL;
+// let API_URL;
+
+let { API_URL } = process.env;
+
+if (!API_URL.startsWith('http')) {
+  const s = process.env.NODE_ENV === 'development' ? '' : 's';
+  API_URL = `http${s}://${API_URL}`;
+}
 
 // [color, dark]
 const POLY_COLORS = [
@@ -376,6 +388,7 @@ export default new Vuex.Store({
 
     // api states
     loaded: false,
+    paramLoad: null,
     query: null,
     queryTerms: {},
     manualQueryTerms: [],
@@ -433,6 +446,9 @@ export default new Vuex.Store({
     },
     setLoadingState(state, loaded) {
       state.loaded = loaded;
+    },
+    setParamLoad(state, params) {
+      state.paramLoad = params;
     },
     setFields(state, fields) {
       state.fields = fields;
@@ -624,6 +640,9 @@ export default new Vuex.Store({
     },
   },
   getters: {
+    getLoaded(state) {
+      return state.loaded;
+    },
     collections(state) {
       return state.loaded ? Object.keys(state.customSettings) : [];
     },
@@ -838,7 +857,20 @@ export default new Vuex.Store({
       }
       context.commit("setLoadingState", true);
     },
-    loadFromParams(context, params) {
+    queueParamLoad(context, params) {
+      context.commit('setParamLoad', params);
+      if (context.state.loaded && params !== null) {
+        // should we put param in?
+        context.dispatch('loadFromParams', params);
+      }
+    },
+    async loadFromParams(context, params = null) {
+      if (params === null) {
+        params = context.state.paramLoad;
+      }
+      if (context.state.paramLoad !== null) {
+        context.commit('setParamLoad', null);
+      }
       const sort = {};
       let doPolys = false;
       let map = null;
@@ -947,7 +979,9 @@ export default new Vuex.Store({
         context.dispatch('updateGeoFacetsFilter');
       }
       context.commit('rebuildQuery');
-      return context.dispatch('runNewQuery');
+      const ret = context.dispatch('runNewQuery');
+      context.commit('setParamLoad', null);
+      return ret;
     },
     setDrawer(context, open) {
       context.commit("setDrawer", open);
@@ -956,8 +990,11 @@ export default new Vuex.Store({
       context.commit("setCardOpen", open);
     },
     setGoogle(context, googleApi) {
+      const firstSet = context.state.google == null && googleApi != null;
       context.commit("setGoogle", googleApi);
-      context.dispatch('updateGeoFacetsFilter');
+      if (firstSet) {
+        context.dispatch('updateGeoFacetsFilter');
+      }
     },
     setMapZoom(context, zoom) {
       context.commit('setMapZoom', zoom);
@@ -1041,6 +1078,10 @@ export default new Vuex.Store({
     },
     updateGeoFacetsFilter: _.debounce(async function(context) {
       // returns whether or not another query was done
+      if (typeof context.state.google.maps.geometry === 'undefined') {
+        context.dispatch('updateGeoFacetsFilter');
+        return;
+      }
       if (context.state.google === null || context.getters.filterPolyList.filter(p => p.selected).length === 0) {
         // assume only come in pairs
         if (context.state.manualQueryTerms.length !== 0) {
@@ -1184,6 +1225,14 @@ export default new Vuex.Store({
       if (dump) {
         query = context.state.dumpQuery;
         queryDispatch = "_doDump";
+      }
+      let waiting = false;
+      while (typeof API_URL === 'undefined') {
+        await sleep(100);
+        waiting = true;
+      }
+      if (waiting) {
+        context.state.query = query;
       }
 
       await context.dispatch(queryDispatch);

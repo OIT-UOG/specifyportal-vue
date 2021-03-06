@@ -13,7 +13,7 @@
 // import ResultTable from './components/ResultTable'
 import Navbar from '@/components/Navbar'
 import ViewNav from '@/components/ViewNav'
-import { mapState } from 'vuex';
+import { mapActions, mapState } from 'vuex';
 
 export default {
   name: 'App',
@@ -34,9 +34,17 @@ export default {
         query: this.routerParams,
       });
     },
+    loaded() {
+      if (this.paramLoad !== null) {
+        this.loadFromParams();
+      }
+    },
   },
   computed: {
-    ...mapState(['routerParams']),
+    ...mapState(['routerParams', 'loaded', 'paramLoad']),
+  },
+  methods: {
+    ...mapActions(['loadFromParams']),
   },
 }
 </script>

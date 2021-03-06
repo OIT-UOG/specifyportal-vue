@@ -3,7 +3,7 @@ import './plugins/vuetify';
 import * as VueGoogleMaps from 'vue2-google-maps';
 import InfiniteScroll from 'v-infinite-scroll';
 import 'v-infinite-scroll/dist/v-infinite-scroll.css';
-import AsyncComputed from 'vue-async-computed'
+import AsyncComputed from 'vue-async-computed';
 import App from './App.vue';
 import router from './router';
 import store from './store';
@@ -32,11 +32,13 @@ if (!API_URL.startsWith('http')) {
   API_URL = `http${s}://${API_URL}`;
 }
 
+store.API_URL = API_URL;
+
 new Vue({
   router,
   store,
   render: h => h(App),
   async created() {
-    await this.$store.dispatch('loadSettings', { apiUrl: API_URL, query: router.currentRoute.query });
+    await this.$store.dispatch('loadSettings', { apiUrl: API_URL });
   },
 }).$mount('#app');
