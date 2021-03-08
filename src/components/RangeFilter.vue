@@ -72,6 +72,11 @@ export default {
 		min: Number,
 		max: Number,
     between: Boolean,
+    isOpen: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
     prop_factory: {
       type: Function,
       required: false,
@@ -162,6 +167,9 @@ export default {
   },
 	methods: {
 		submit: _.debounce(async function(add) {
+      if (!this.isOpen) {
+        return;
+      }
       if (add) {
         this.isNew = true
       }

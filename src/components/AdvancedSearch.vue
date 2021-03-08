@@ -97,7 +97,8 @@ export default {
         min: 0,
         max: 100,
         default: 50,
-        between: false
+        between: false,
+        isOpen: false,
       },
       resolveFilters: {
 
