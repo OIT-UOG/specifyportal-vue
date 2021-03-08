@@ -85,8 +85,16 @@ export default {
   },
   methods: {
     initializeMap() {
-      if (this.google === null) {
-        this.setGoogle(gmapApi());
+      let retry = typeof this.$refs.map.$mapObject === 'undefined';
+      if (!retry) {
+        const bounds = this.$refs.map.$mapObject.getBounds();
+        retry = typeof bounds === 'undefined';
+      }
+      if (retry) {
+        setTimeout(() => {
+          this.initializeMap();
+        }, 50);
+        return;
       }
       if (this.bounds === null) {
         const bounds = this.$refs.map.$mapObject.getBounds()
@@ -94,6 +102,9 @@ export default {
         if (Math.min(span.lat(), span.lng()) > 0) {
           this.setMapBounds(bounds);
         }
+      }
+      if (this.google === null) {
+        this.setGoogle(gmapApi());
       }
     },
     toggleHighlight(poly) {
