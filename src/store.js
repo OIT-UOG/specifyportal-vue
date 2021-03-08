@@ -1078,7 +1078,9 @@ export default new Vuex.Store({
     },
     updateGeoFacetsFilter: _.debounce(async function(context) {
       // returns whether or not another query was done
-      if (typeof context.state.google.maps.geometry === 'undefined') {
+      // not sure why we can't let google===null through here
+      // but it somehow causes problems sometimes
+      if (context.state.google === null || typeof context.state.google.maps.geometry === 'undefined') {
         context.dispatch('updateGeoFacetsFilter');
         return;
       }
